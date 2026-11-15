@@ -334,3 +334,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 ## License
 
 [Apache-2.0](LICENSE). Adapted material keeps its upstream licence; see [NOTICE](NOTICE).
+
+## More from Lax Society
+
+Part of [Lax Society](https://laxsociety.github.io): open-source apps, built in public.
