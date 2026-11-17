@@ -53,13 +53,13 @@ A single UI skill also installs on its own with the `skills` CLI: `npx skills ad
 
 ## Audio plugin
 
-Give the agent a script, or ask it to write one, and it renders a finished piece: a cast of up to ten voices with per-line delivery (happy, scared, hushed and eleven more), licensed sound effects, ambience and music, mixed, ducked and mastered to the loudness your domain needs.
+Give the agent a script, or ask it to write one, and it renders a finished piece: a cast of up to ten voices (nineteen with the optional Qwen3 voices on Apple Silicon) with per-line delivery (happy, scared, hushed and eleven more), licensed sound effects, ambience and music, mixed, ducked and mastered to the loudness your domain needs.
 Every line is transcribed and checked before the mix, so a voice that mumbles, skips a word or reads a tag aloud is re-rendered automatically.
 Out come `mix.mp3`/`mix.wav`, per-speaker stems, `timeline.json` with word timings, speaker-labelled captions, `audio_meta.json` for HyperFrames video, and a `CREDITS.md` for every sound used.
 
 ### Setup
 
-On first use the agent runs `setup.mjs --check` and, if anything is missing, asks you once before installing: a Python environment at `~/.agentskilldeck/venv` with Supertonic 3 and faster-whisper (about 550 MB of models, downloaded once, then everything runs offline), and it tells you the one command to install ffmpeg if you do not have it (the tools never run a package manager themselves). It asks once before installing; when you say yes, the install records it in `~/.agentskilldeck/config.json` and later sessions see the check pass. A no is not stored: the agent renders timing drafts with the system voice for that conversation. Requires Node 18 or later and Python 3.10 or later.
+On first use the agent runs `setup.mjs --check` and, if anything is missing, asks you once before installing: a Python environment at `~/.agentskilldeck/venv` with Supertonic 3 and faster-whisper (about 550 MB of models, downloaded once, then everything runs offline), and it tells you the one command to install ffmpeg if you do not have it (the tools never run a package manager themselves). It asks once before installing; when you say yes, the install records it in `~/.agentskilldeck/config.json` and later sessions see the check pass. A no is not stored: the agent renders timing drafts with the system voice for that conversation. Requires Node 18 or later and Python 3.10 or later. Qwen3 voices are a separate opt-in install on Apple Silicon (`setup.mjs --install-qwen3`, about 3.1 GB); the agent asks before it.
 
 ### Skills
 
@@ -152,9 +152,9 @@ https://github.com/user-attachments/assets/a6ba0e0f-641f-42e5-926c-ea1d6776bf25
 
 ### How it compares
 
-- **Free and local.** No account, no API key, no per-character bill. Voices (Supertonic 3) and QA (faster-whisper) run on your CPU after a one-time download. ElevenLabs-based skills, Noiz and inference.sh are paid cloud services.
-- **A real cast.** Ten voices, measured for pitch and pace so the casting guide can pair contrasting voices in a scene; any number of speakers per script. Dia-based tools stop at two speakers; the other Supertonic skill speaks with one voice.
-- **Delivery presets, honestly named.** Supertonic has no emotion control. Each of the 14 presets is a recipe of phrasing, speed, gain, EQ and pauses, with speeds tuned by measurement ([delivery-tuning](docs/coverage/delivery-tuning.md)); the script guide teaches the phrasing half, which carries most of the emotion.
+- **Free and local.** No account, no API key, no per-character bill. Voices (Supertonic 3, or Qwen3-TTS on Apple Silicon) and QA (faster-whisper) run on your machine after a one-time download. ElevenLabs-based skills, Noiz and inference.sh are paid cloud services.
+- **A real cast.** Ten voices (plus nine Qwen3 voices and voices designed from a description on Apple Silicon), measured for pitch and pace so the casting guide can pair contrasting voices in a scene; any number of speakers per script. Dia-based tools stop at two speakers; the other Supertonic skill speaks with one voice.
+- **Delivery presets, honestly named.** Supertonic has no emotion control (Qwen3 voices take each preset as a spoken-style instruction instead). Each of the 14 presets is a recipe of phrasing, speed, gain, EQ and pauses, with speeds tuned by measurement ([delivery-tuning](docs/coverage/delivery-tuning.md)); the script guide teaches the phrasing half, which carries most of the emotion.
 - **Licensed sound, credited.** Effects, ambience and music come from Openverse, Wikimedia Commons and (with your free token) Freesound, filtered to CC0 and CC BY, each download saved with a license sidecar and credited in `CREDITS.md`. Offline, it falls back to a bundled CC0 pack and generated beds.
 - **A QA gate.** Every line is transcribed and scored; failures are re-rendered with new seeds. The master must hit its loudness target (−16 LUFS, −14 for ads and video, −20 for meditation, ACX for audiobooks, including the −60 dB noise floor) or the run exits 3 with the numbers.
 - **HyperFrames-ready.** `audio_meta.json`, per-speaker stems and word-timed `timeline.json` are what a video tool needs for captions, lip-sync and cuts.
@@ -290,7 +290,7 @@ agentskilldeck builds on Impeccable's design guidance (see Credits). The differe
 No account, no API key, no server, no telemetry.
 
 - **UI:** only your query terms go to the public APIs below; `references.mjs` makes no network requests. Catalogue responses are cached for 24 hours in a per-user temp folder (`agentskilldeck-cache-<uid>`); requests time out after 8 seconds and are retried once.
-- **Audio:** voices, transcription and cloning run on your machine. The network is used for the one-time model downloads (Supertonic 3 and faster-whisper from Hugging Face; Chatterbox only if you enable cloning) and for sound searches, which send only your query to the sound sources below. Recordings and voice references stay in your project and `~/.agentskilldeck/voices`, in owner-only folders.
+- **Audio:** voices, transcription and cloning run on your machine. The network is used for the one-time model downloads (Supertonic 3 and faster-whisper from Hugging Face; Chatterbox only if you enable cloning; Qwen3-TTS only if you enable it) and for sound searches, which send only your query to the sound sources below. Recordings and voice references stay in your project and `~/.agentskilldeck/voices`, in owner-only folders.
 
 ## Data sources
 
@@ -307,6 +307,7 @@ No account, no API key, no server, no telemetry.
 | [Freesound](https://freesound.org) API (your token, optional) | `sounds.mjs`, `produce.mjs` | The largest effects library, filtered to CC0 and CC BY |
 | [Internet Archive](https://archive.org) (opt-in) | `sounds.mjs --sources …,archive` | Large ambience catalogue; off by default because its licence metadata is unreliable |
 | [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) and [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | `setup.mjs` | The on-device voice model and the transcription model used for QA |
+| [Qwen3-TTS](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice) via [mlx-audio](https://github.com/Blaizzy/mlx-audio) | `setup.mjs --install-qwen3` (opt-in, Apple Silicon) | Optional second voice engine |
 
 ## Credits
 
@@ -314,6 +315,7 @@ agentskilldeck adapts and builds on:
 
 - [Impeccable](https://github.com/pbakaus/impeccable) by Paul Bakaus (Apache-2.0): the source of most of the design guides.
 - [Supertonic 3](https://github.com/supertone-inc/supertonic) by Supertone (code MIT, model OpenRAIL-M): the audio plugin's voice engine, installed on your machine.
+- [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by the Qwen team, Alibaba Cloud (weights Apache-2.0), run with [mlx-audio](https://github.com/Blaizzy/mlx-audio) (MIT): the optional voice engine on Apple Silicon.
 - [Chatterbox](https://github.com/resemble-ai/chatterbox) by Resemble AI (MIT): optional local voice conversion for your own voice.
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (MIT): transcription for audio QA.
 - [HyperFrames](https://github.com/heygen-com/hyperframes) (Apache-2.0): mixing ideas (voiceover carve, ducking) and the `audio_meta.json` shape.

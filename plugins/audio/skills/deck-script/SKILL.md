@@ -6,7 +6,7 @@ license: Apache-2.0
 
 # Deck script
 
-Write words for the ear, in a format the audio pipeline can render without guesswork. The voice engine (Supertonic 3) has no emotion control, so the script carries the performance: word choice, sentence length, punctuation, pauses and a delivery preset per line. A good script here is one a stranger could read aloud cold and get right.
+Write words for the ear, in a format the audio pipeline can render without guesswork. The default voice engine (Supertonic 3) has no emotion control, so the script carries the performance (optional Qwen3 voices also take the delivery preset as an instruction, but the phrasing still matters): word choice, sentence length, punctuation, pauses and a delivery preset per line. A good script here is one a stranger could read aloud cold and get right.
 
 ## Work from the brief
 

@@ -74,6 +74,23 @@ model, including the examples here. They are summarised in the audio plugin's
 ethics-licensing guide; the full text above governs.
 
 -------------------------------------------------------------------------------
+Qwen3-TTS — https://github.com/QwenLM/Qwen3-TTS
+The audio plugin can optionally drive Qwen3-TTS (1.7B CustomVoice and
+VoiceDesign) on Apple Silicon, installed on the user's machine only when they
+ask (setup.mjs --install-qwen3; 8-bit MLX conversions from
+https://huggingface.co/mlx-community). Neither the runner nor the weights are
+redistributed in this repository.
+
+Model weights: Apache License 2.0, Copyright Alibaba Cloud (the Qwen team):
+https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice
+
+-------------------------------------------------------------------------------
+mlx-audio — https://github.com/Blaizzy/mlx-audio
+Runs Qwen3-TTS for the audio plugin (tools/engine/qwen3.py imports it);
+installed by setup.mjs --install-qwen3 (pip package mlx-audio), not
+redistributed. MIT License, Copyright (c) 2024 Prince Canuma.
+
+-------------------------------------------------------------------------------
 careeros voice skill (same author as agentskilldeck)
 The audio guides "writing for the ear", script format, nonverbal, casting and
 captions adapt guidance from the careeros voice skill, which is owned by the
