@@ -10,6 +10,7 @@ import { NATIVE_STACK, CANDIDATE_TAGS, nativeOk, baseVoice, loadNativeTable } fr
 
 export const SYNTH_PY = fileURLToPath(new URL('../engine/synth.py', import.meta.url));
 export const CLONE_PY = fileURLToPath(new URL('../engine/clone.py', import.meta.url));
+export const QWEN3_PY = fileURLToPath(new URL('../engine/qwen3.py', import.meta.url));
 export const DEFAULT_STEPS = 10;
 const TAIL_LINES = 20;
 
@@ -46,6 +47,13 @@ export function venvDir({ env = process.env, home = homedir() } = {}) {
 // AGENTSKILLDECK_CLONE_VENV, else ~/.agentskilldeck/venv-clone.
 export function cloneVenvDir({ env = process.env, home = homedir() } = {}) {
   return env.AGENTSKILLDECK_CLONE_VENV || join(home, '.agentskilldeck', 'venv-clone');
+}
+
+// The optional Qwen3-TTS engine (mlx-audio, Apple Silicon) has its own venv:
+// AGENTSKILLDECK_QWEN3_VENV, else ~/.agentskilldeck/venv-qwen3.
+// AGENTSKILLDECK_QWEN3_PYTHON points at any Python that already has mlx-audio.
+export function qwen3VenvDir({ env = process.env, home = homedir() } = {}) {
+  return env.AGENTSKILLDECK_QWEN3_VENV || join(home, '.agentskilldeck', 'venv-qwen3');
 }
 
 export function venvPython(dir) {

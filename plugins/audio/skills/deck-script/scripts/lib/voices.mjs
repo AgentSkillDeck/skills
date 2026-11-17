@@ -8,6 +8,9 @@
 //                    then Chatterbox voice conversion (engine/clone.py) gives it
 //                    the timbre of the reference in ~/.agentskilldeck/voices/<name>/.
 //                    clone:<name>@F2 forces the base voice.
+//   qwen:<speaker>   a Qwen3-TTS CustomVoice speaker (engine/qwen3.py, Apple
+//                    Silicon only, opt-in install); qwen:design takes the
+//                    voice from the cast entry's `describe:` (VoiceDesign).
 // A clone voice is a folder: reference.wav (10-60 s, cleaned), voice.json
 // {version, name, base, f0_median_hz, reference, duration_s, source, created}
 // and consent.json {kind, statement, speaker?, at}. No consent file, no clone.
@@ -23,6 +26,21 @@ export const PRESETS = Object.keys(VOICE_F0);
 export const NAME_RE = /^[a-z0-9][a-z0-9_-]{0,39}$/;
 export const DEFAULT_VOICE = 'M1';
 
+// Qwen3-TTS CustomVoice speakers: gender (picks the nonverbal sample pack) and
+// native language, from the model card. `design` is the VoiceDesign model.
+export const QWEN_SPEAKERS = {
+  ryan: { gender: 'male', native: 'English' },
+  aiden: { gender: 'male', native: 'English' },
+  vivian: { gender: 'female', native: 'Chinese' },
+  serena: { gender: 'female', native: 'Chinese' },
+  uncle_fu: { gender: 'male', native: 'Chinese' },
+  dylan: { gender: 'male', native: 'Chinese (Beijing)' },
+  eric: { gender: 'male', native: 'Chinese (Sichuan)' },
+  ono_anna: { gender: 'female', native: 'Japanese' },
+  sohee: { gender: 'female', native: 'Korean' },
+};
+export const QWEN_DESIGN = 'design';
+
 // Exit 1: a script/usage problem (unknown clone, no consent).
 export class CloneVoiceError extends Error {
   constructor(message) { super(message); this.name = 'CloneVoiceError'; this.exitCode = 1; }
@@ -34,6 +52,13 @@ export function parseVoice(v) {
   const up = s.toUpperCase();
   if (PRESETS.includes(up)) return { kind: 'preset', voice: up };
   if (s.toLowerCase() === 'record') return { kind: 'record' };
+  const q = /^qwen:\s*(.*)$/i.exec(s);
+  if (q) {
+    const speaker = q[1].trim().toLowerCase().replace(/[\s-]+/g, '_');
+    if (speaker === QWEN_DESIGN) return { kind: 'qwen', speaker: QWEN_DESIGN, voice: `qwen:${QWEN_DESIGN}` };
+    if (!QWEN_SPEAKERS[speaker]) return { kind: 'invalid', reason: `unknown Qwen3 voice "${s}": use qwen:${Object.keys(QWEN_SPEAKERS).join(', qwen:')} or qwen:design` };
+    return { kind: 'qwen', speaker, voice: `qwen:${speaker}` };
+  }
   const m = /^clone:(.*)$/i.exec(s);
   if (m) {
     const [rawName, rawBase, extra] = m[1].split('@');
@@ -44,7 +69,7 @@ export function parseVoice(v) {
     if (!PRESETS.includes(base)) return { kind: 'invalid', reason: `the base voice after @ must be one of ${PRESETS.join(', ')} (got "${s}")` };
     return { kind: 'clone', name, base };
   }
-  return { kind: 'invalid', reason: `unknown voice "${s}": use a preset (${PRESETS.join(', ')}), record, or clone:<name>` };
+  return { kind: 'invalid', reason: `unknown voice "${s}": use a preset (${PRESETS.join(', ')}), qwen:<voice>, record, or clone:<name>` };
 }
 
 export function voicesDir({ env = process.env, home = homedir() } = {}) {

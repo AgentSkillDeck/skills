@@ -18,13 +18,15 @@ import { hasFfmpeg } from './lib/ffmpeg.mjs';
 import { SetupError } from './lib/engine.mjs';
 import { resolveCue, freesoundTokenFromEnv, parseSources, defaultSources, genderOf } from './lib/sounds/index.mjs';
 import { writeTimeline, writeCaptions, writeAudioMeta, writeCredits, alignWords, estimateWords } from './lib/deliver.mjs';
-import { selectEngine, openCloneSession, synthBatch, asrBatch, nonverbalClip, activeRmsDb, nvMatchGain, toWav, exitCodeFor } from './lib/render.mjs';
+import { selectEngine, openCloneSession, synthBatch, asrBatch, isQwen, nonverbalClip, activeRmsDb, nvMatchGain, toWav, exitCodeFor } from './lib/render.mjs';
 import { recordingsFor } from './lib/recorder.mjs';
 import { parseVoice, loadCloneVoice } from './lib/voices.mjs';
 
-const USAGE = 'Usage: node scripts/produce.mjs <script.audio.md> --out <dir> [--preset name] [--draft] [--no-qa] [--offline] [--takes 1-8] [--sources openverse,commons[,archive][,freesound]] [--json]';
+const USAGE = 'Usage: node scripts/produce.mjs <script.audio.md> --out <dir> [--preset name] [--draft] [--no-qa] [--offline] [--takes 1-8] [--qa-model base|small|medium] [--sources openverse,commons[,archive][,freesound]] [--json]';
 const MUSIC_CONTROLS = new Set(['start', 'stop', 'swell', 'duck', 'out']);
 const PAUSE_PAD_S = 1;
+// Whisper sizes for the QA transcript (the English-only .en variant for English).
+const QA_MODELS = ['base', 'small', 'medium'];
 const ENGINE_TAG_RE = /<[a-z-]+>/;
 
 function parse(argv) {
@@ -34,7 +36,7 @@ function parse(argv) {
       args: argv, allowPositionals: true,
       options: {
         out: { type: 'string' }, preset: { type: 'string' }, draft: { type: 'boolean' }, 'no-qa': { type: 'boolean' },
-        offline: { type: 'boolean' }, takes: { type: 'string' }, sources: { type: 'string' }, json: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
+        offline: { type: 'boolean' }, takes: { type: 'string' }, 'qa-model': { type: 'string' }, sources: { type: 'string' }, json: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
       },
     });
   } catch (e) {
@@ -49,11 +51,13 @@ function parse(argv) {
     if (!/^\d+$/.test(values.takes) || Number(values.takes) < 1 || Number(values.takes) > 8) throw new UsageError(`--takes must be 1-8.\n${USAGE}`);
     takes = Number(values.takes);
   }
+  const qaModel = values['qa-model'];
+  if (qaModel !== undefined && !QA_MODELS.includes(qaModel)) throw new UsageError(`--qa-model must be one of ${QA_MODELS.join(', ')}.\n${USAGE}`);
   let sources;
   if (values.sources !== undefined) {
     try { sources = parseSources(values.sources); } catch (e) { throw new UsageError(`${e.message}\n${USAGE}`); }
   }
-  return { script: positionals[0], out: values.out, preset: values.preset, draft: Boolean(values.draft), qa: !values['no-qa'], offline: Boolean(values.offline), takes, sources, json: Boolean(values.json) };
+  return { script: positionals[0], out: values.out, preset: values.preset, draft: Boolean(values.draft), qa: !values['no-qa'], offline: Boolean(values.offline), takes, sources, qaModel, json: Boolean(values.json) };
 }
 
 const fmt = (x, d = 1) => (Number.isFinite(x) ? x.toFixed(d) : String(x));
@@ -123,9 +127,11 @@ async function producePipeline(opts, ctx, run) {
   }
 
   if (!(await (ctx.hasFfmpeg ?? hasFfmpeg)())) throw new SetupError('ffmpeg not found. Install it (macOS: `brew install ffmpeg`, Linux: `sudo apt install ffmpeg`) or set AGENTSKILLDECK_FFMPEG.');
-  const engine = await selectEngine({ draft: opts.draft, engine: ctx.engine, env, checkSetupImpl: ctx.checkSetup, clone: clones.size > 0, checkCloneImpl: ctx.checkCloneSetup });
+  const qwenLines = speechItems.filter((i) => !i.recorded && isQwen(i));
+  const engine = await selectEngine({ draft: opts.draft, engine: ctx.engine, env, checkSetupImpl: ctx.checkSetup, clone: clones.size > 0, checkCloneImpl: ctx.checkCloneSetup, qwen: qwenLines.length > 0, checkQwen3Impl: ctx.checkQwen3Setup });
   const draft = engine.mode === 'draft';
-  if (draft) warn('draft voice: rendered with the system voice for timing only (not Supertonic); not for release');
+  if (draft) warn(`draft voice: rendered with the system voice for timing only (not ${qwenLines.length ? 'Qwen3-TTS or ' : ''}Supertonic); not for release`);
+  if (qwenLines.length) log(`      qwen3 voices: ${[...new Set(qwenLines.map((i) => i.voice))].join(', ')}`);
   if (draft && clones.size) warn(`clone voice${clones.size === 1 ? '' : 's'} ${[...new Set([...clones.values()].map((c) => c.name))].join(', ')}: drafted with the system voice, not converted`);
   if (!draft && clones.size) run.cloneSession = openCloneSession(engine, env);
   if (clones.size) log(`      clone voices: ${[...clones.values()].map((c) => `${c.name} (base ${c.base})`).join(', ')}`);
@@ -135,7 +141,9 @@ async function producePipeline(opts, ctx, run) {
 
   // 3. synth (take 0 for every speech segment, one worker process)
   // 4. QA per line with retakes (seed + 1, up to --takes); word timestamps come from here
-  const takeItem = (it, seed) => ({ text: it.text, voice: it.voice, lang: it.lang, speed: it.speed, seed });
+  // The engine reads `say` (the lexicon respelling) when there is one; captions keep `text`.
+  const takeItem = (it, seed) => ({ text: it.say ?? it.text, voice: it.voice, lang: it.lang, speed: it.speed, seed, ...(it.instruct ? { instruct: it.instruct } : {}), ...(it.describe ? { describe: it.describe } : {}) });
+  const heardAs = (it) => ({ text: it.say ?? it.text, lang: it.lang, native_at: it.native_at });
   const doQa = opts.qa && !draft;
   const takes = new Map();
   const byId = new Map();
@@ -150,8 +158,8 @@ async function producePipeline(opts, ctx, run) {
     if (!doQa) return firstTakes;
     let pending = items.map((it) => takes.get(it.id)[0]);
     for (let round = 1; pending.length; round++) {
-      const heard = await asrBatch(pending.map((t) => ({ key: t.key, path: t.path, lang: byId.get(t.id).lang })), { cacheDir, engine, env, ...progress('asr') });
-      pending.forEach((t, i) => Object.assign(t, { asr: heard[i] }, checkLine({ text: byId.get(t.id).text, lang: byId.get(t.id).lang, native_at: byId.get(t.id).native_at }, heard[i])));
+      const heard = await asrBatch(pending.map((t) => ({ key: t.key, path: t.path, lang: byId.get(t.id).lang })), { cacheDir, engine, env, model: opts.qaModel, ...progress('asr') });
+      pending.forEach((t, i) => Object.assign(t, { asr: heard[i] }, checkLine(heardAs(byId.get(t.id)), heard[i])));
       const retakes = retakePlan(items.flatMap((it) => takes.get(it.id)), opts.takes);
       log(`[4/8] qa${label} round ${round}: ${pending.length} checked, ${pending.filter((t) => t.ok).length} ok, ${retakes.length} retake${retakes.length === 1 ? '' : 's'}`);
       if (!retakes.length) break;
@@ -216,7 +224,7 @@ async function producePipeline(opts, ctx, run) {
   const variants = new Map();
   for (const [i, it] of items.entries()) {
     if (it.kind === 'nv') {
-      const vkey = `${genderOf({ voice: it.base_voice ?? it.voice })}-${it.tag}`;
+      const vkey = `${genderOf({ voice: it.base_voice ?? it.voice, gender: it.gender })}-${it.tag}`;
       const variant = ((variants.get(vkey) ?? 0) % 2) + 1;
       variants.set(vkey, variant);
       const clip = await nonverbalClip(it, { outDir: out, cacheDir, offline: opts.offline, variant, sources, fetchImpl: ctx.fetchImpl, freesoundToken, projectDir: dirname(scriptPath) });
@@ -300,13 +308,14 @@ async function producePipeline(opts, ctx, run) {
   const recordedSpeakers = [...new Set(speech.filter((i) => i.recorded).map((i) => i.speaker))];
   const cloneCredits = [...new Set(speech.filter((i) => parseVoice(i.voice).kind === 'clone').map((i) => i.speaker))]
     .map((speaker) => ({ speaker, ...clones.get(speech.find((i) => i.speaker === speaker && parseVoice(i.voice).kind === 'clone').voice) }));
-  writeCredits(assetList, join(out, 'CREDITS.md'), { draft, recorded: recordedSpeakers, clones: draft ? [] : cloneCredits, synth: speech.some((i) => !i.recorded) });
+  const qwenCredits = draft ? [] : [...new Map(speech.filter((i) => !i.recorded && isQwen(i)).map((i) => [i.speaker, { speaker: i.speaker, voice: i.voice, describe: i.describe }])).values()];
+  writeCredits(assetList, join(out, 'CREDITS.md'), { draft, recorded: recordedSpeakers, clones: draft ? [] : cloneCredits, qwen: qwenCredits, synth: speech.some((i) => !i.recorded && (draft || !isQwen(i))) });
 
   const qaLines = doQa ? speech.map((it) => {
     const all = takes.get(it.id);
     const b = best.get(it.id);
     const problems = it.recorded && !b.ok ? [...b.problems, `re-record: node scripts/record.mjs "${scriptPath}" --speaker ${it.speaker} --out "${out}" --line ${it.n}`] : b.problems;
-    return { id: it.id, n: it.n, speaker: it.speaker, voice: it.voice, text: it.text, seed: b.seed, takes: all.length, ok: b.ok, wer: Math.round(b.wer * 1000) / 1000, problems, heard: b.asr?.text ?? '', flagged: !b.ok, ...(it.recorded ? { recorded: true } : {}), ...(b.notes?.length ? { notes: b.notes } : {}), ...(fallbackLines.has(it.n) ? { nv_fallback: true } : {}) };
+    return { id: it.id, n: it.n, speaker: it.speaker, voice: it.voice, text: it.text, ...(it.say ? { said: it.say } : {}), seed: b.seed, takes: all.length, ok: b.ok, wer: Math.round(b.wer * 1000) / 1000, problems, heard: b.asr?.text ?? '', flagged: !b.ok, ...(it.recorded ? { recorded: true } : {}), ...(b.notes?.length ? { notes: b.notes } : {}), ...(fallbackLines.has(it.n) ? { nv_fallback: true } : {}) };
   }) : [];
   const report = qaReport(qaLines, { ...mastering, target: preset.loudness });
   delete report.mastering.silences;

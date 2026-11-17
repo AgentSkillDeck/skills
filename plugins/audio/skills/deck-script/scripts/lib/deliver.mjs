@@ -9,6 +9,7 @@ const SUPERTONIC_BASE = 'Voices synthesised with Supertonic 3 by Supertone Inc. 
 export const SUPERTONIC_CREDIT = `${SUPERTONIC_BASE} AI-generated voices, not real people.`;
 // When the piece also carries a real voice (recorded or cloned), only the presets are "not real people".
 export const SUPERTONIC_CREDIT_WITH_REAL = `${SUPERTONIC_BASE} Preset voices are synthetic, not real people.`;
+export const QWEN3_CREDIT = 'Voices synthesised with Qwen3-TTS by the Qwen team, Alibaba Cloud (https://github.com/QwenLM/Qwen3-TTS; model weights Apache-2.0), run with mlx-audio (https://github.com/Blaizzy/mlx-audio; MIT). AI-generated voices, not real people.';
 export const DRAFT_CREDIT = 'Draft voice: the system voice (macOS say or espeak-ng), for timing only. Not for release.';
 
 const r3 = (x) => Math.round(x * 1000) / 1000;
@@ -251,10 +252,15 @@ export const CHATTERBOX_CREDIT = 'Voice conversion by Chatterbox (Resemble AI, h
 // recorded: speakers who read their own lines; clones: [{speaker, name, base, consent}]
 // (a clone line is Supertonic speech converted to the reference's timbre);
 // synth: false when no line was synthesised at all.
-export function writeCredits(assets, out, { draft = false, recorded = [], clones = [], synth = true } = {}) {
+// qwen: [{speaker, voice, describe?}], the speakers voiced by Qwen3-TTS.
+export function writeCredits(assets, out, { draft = false, recorded = [], clones = [], qwen = [], synth = true } = {}) {
   const lines = ['# Credits', ''];
   const real = recorded.length > 0 || clones.length > 0;
   if (synth || draft) lines.push(draft ? DRAFT_CREDIT : real ? SUPERTONIC_CREDIT_WITH_REAL : SUPERTONIC_CREDIT, '');
+  if (qwen.length && !draft) {
+    lines.push(QWEN3_CREDIT, '');
+    for (const q of qwen) lines.push(`${q.speaker}: ${q.describe ? `a designed voice ("${q.describe}")` : `the ${q.voice.slice(5)} voice`} (Qwen3-TTS ${q.describe ? 'VoiceDesign' : 'CustomVoice'}).`, '');
+  }
   for (const sp of recorded) lines.push(`${sp}: recorded by the speaker (their own voice, with consent on file).`, '');
   if (clones.length) {
     lines.push(CHATTERBOX_CREDIT, '');

@@ -1,5 +1,7 @@
 # Delivery presets
 
+Qwen3 voices (`qwen:<voice>`) take each emotion as an instruction sentence instead of the speed, gain and filter values below; only the pauses apply. See [qwen3](qwen3.md).
+
 Supertonic 3 has no emotion parameter. A delivery preset is a recipe: **the words you write**, then speed, gain, an EQ or compression filter, and the pause around the line. The words carry most of the emotion, so each preset below starts with a phrasing recipe. Call them delivery presets, never "emotional TTS".
 
 Write the preset as the first word of the annotation: `ELI (scared): …`. Example lines come from the lab measurements (`docs/coverage/delivery-tuning.md`): every preset was rendered for every voice, rated by listening, then re-tuned by transcript.

@@ -1,6 +1,6 @@
 ---
 name: deck-voice
-description: Render multi-voice audio on-device from an *.audio.md script with Supertonic 3: casting, emotion presets, laughs, transcript QA and retakes, mix, captions and credits; also the user's own voice, recorded or cloned locally with consent. Use for "read this aloud", "make an audiobook", "voice this dialogue", "which voice for the narrator", "redo line 12" or "use my voice". Not for writing scripts (deck-script) or sound design (deck-mix).
+description: Render multi-voice audio on-device from an *.audio.md script with Supertonic 3 (or the optional Qwen3-TTS voices on Apple Silicon): casting, emotion presets, laughs, transcript QA and retakes, mix, captions and credits; also the user's own voice, recorded or cloned locally with consent. Use for "read this aloud", "make an audiobook", "voice this dialogue", "which voice for the narrator", "redo line 12" or "use my voice". Not for writing scripts (deck-script) or sound design (deck-mix).
 license: Apache-2.0
 ---
 
@@ -22,12 +22,13 @@ Run commands from this skill's base directory (the folder containing this SKILL.
 |---|---|
 | Install, first run, drafts, environment variables | [setup](reference/setup.md) |
 | Picking voices, auditions, measured voice traits | [casting](reference/casting.md) |
+| Qwen3 voices, VoiceDesign, the opt-in install (Apple Silicon) | [qwen3](reference/qwen3.md) |
 | A line sounds flat or wrong for its emotion | [delivery](reference/delivery.md) |
 | A tag was spoken as a word, or a laugh or breath sounds off | [nonverbal](reference/nonverbal.md) |
 | Domain pace, gaps, loudness targets | [domains](reference/domains.md) |
 | QA failures, loudness gate, `qa.json` | [mastering](reference/mastering.md) |
 | Captions, `timeline.json`, `audio_meta.json`, stems for video | [captions](reference/captions.md) + [mixing](reference/mixing.md) |
-| Script syntax errors | [script-format](reference/script-format.md) |
+| Script syntax errors, respelling a misread term (`lexicon:`) | [script-format](reference/script-format.md) |
 | Rewording a line that keeps failing | [writing-for-the-ear](reference/writing-for-the-ear.md) |
 | Sounds in the render, credits | [sound-sourcing](reference/sound-sourcing.md) + [ethics-licensing](reference/ethics-licensing.md) |
 | The user's own voice: recording lines, importing a file, cloning | [your-voice](reference/your-voice.md) + [ethics-licensing](reference/ethics-licensing.md) |
@@ -36,13 +37,16 @@ Run commands from this skill's base directory (the folder containing this SKILL.
 
 ```sh
 node scripts/setup.mjs --check | --install
-node scripts/audition.mjs "<line>" [--voices all|F1,M3] [--emotion scared] [--lang es] --out /abs/out/audition
-node scripts/produce.mjs /abs/script.audio.md --out /abs/out/final [--preset drama] [--takes 4] [--offline] [--json]
+node scripts/audition.mjs "<line>" [--voices all|qwen|F1,M3,qwen:ryan] [--describe "voice in words"] [--emotion scared] [--lang es] --out /abs/out/audition
+node scripts/produce.mjs /abs/script.audio.md --out /abs/out/final [--preset drama] [--takes 4] [--qa-model small] [--offline] [--json]
 node scripts/produce.mjs /abs/script.audio.md --out /abs/out/draft --draft [--no-qa]
 node scripts/record.mjs /abs/script.audio.md --speaker ME --out /abs/out/final [--one-take] [--from /abs/file.m4a] [--line 8] --consent "<statement>"
 node scripts/record.mjs --reference --name me [--from /abs/file.m4a] --consent "<statement>"
 node scripts/setup.mjs --install-clone
+node scripts/setup.mjs --install-qwen3 [--design]
 ```
+
+- **Qwen3 voices** (`qwen:ryan` and eight more, or `qwen:design` from a description): macOS on Apple Silicon only, opt-in. Ask before `--install-qwen3` (about 3.1 GB) and again before `--design` (about 3 GB more), as [qwen3](reference/qwen3.md) describes. Supertonic stays the default; offer Qwen when the user wants a more natural read and the machine supports it.
 
 - `audition.mjs` writes one mp3 per voice plus `audition.md`. Play or list them for the user; describe voices by measured traits, never as a real person.
 - `produce.mjs` runs parse, plan, synth, QA and retakes, sounds, mix, master and deliver, printing one line per stage and a summary (duration, LUFS, QA problems, outputs). Voice renders are cached in `<out>/.cache/`, so re-running with the same `--out` re-voices only changed lines.
@@ -64,7 +68,7 @@ When the user wants to voice a character themselves, read [your-voice](reference
 - **0**: done and QA clean. Report the duration, loudness and output paths.
 - **1**: script or usage error. The message names the line; fix it (or hand back to deck-script) and re-run.
 - **2**: setup missing or a service failed. Final render without the engine: offer `setup.mjs --install` or a draft. ffmpeg missing: give the install command from [setup](reference/setup.md). A worker crash: show the last lines of the message, retry once, then report it.
-- **3**: QA failed, outputs kept. Read `qa.json`: name each failed line with its problem and numbers. Fix by rewording or respelling the line, adding `lang:`, lowering stacked speed, or writing long silences as `[pause N]`, then re-run with the same `--out`. Never present a piece that exited 3 as clean.
+- **3**: QA failed, outputs kept. Read `qa.json`: name each failed line with its problem and numbers. Fix by rewording the line, respelling a misread term in `lexicon:`, adding `lang:`, lowering stacked speed, or writing long silences as `[pause N]`, then re-run with the same `--out`. Never present a piece that exited 3 as clean.
 
 ## Redo a line
 

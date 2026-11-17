@@ -12,6 +12,7 @@ import { searchArchive } from './archive.mjs';
 import { searchFreesound } from './freesound.mjs';
 import { generateBed } from './generate.mjs';
 import { baseVoice } from '../native.mjs';
+import { parseVoice, QWEN_SPEAKERS } from '../voices.mjs';
 
 export { isAllowed, attribution } from './license.mjs';
 export { generateBed } from './generate.mjs';
@@ -182,6 +183,8 @@ function nonverbalCredits() {
 export function genderOf(cue) {
   if (cue.gender === 'male' || cue.gender === 'female') return cue.gender;
   const raw = String(cue.voice ?? '').trim();
+  const q = parseVoice(raw);
+  if (q.kind === 'qwen') return QWEN_SPEAKERS[q.speaker]?.gender ?? 'female'; // qwen:design without a cast `gender:`: the female pack
   const v = /^clone:/i.test(raw) ? String(baseVoice(raw) ?? '') : raw.toUpperCase(); // a clone: its base voice
   return v.startsWith('M') ? 'male' : 'female';
 }

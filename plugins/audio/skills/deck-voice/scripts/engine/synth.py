@@ -6,8 +6,9 @@ JSON lines {"progress": i, "total": n} on stderr. Models load once per process.
   {"mode": "synth", "steps": 10, "out_dir": "...", "items": [{id, text, voice, lang, speed, seed}]}
       -> {id, path, duration_s}   (44.1 kHz mono 16-bit WAV at <out_dir>/<id>.t<seed>.wav,
                                    so a retake never overwrites an earlier take; seed defaults to 0)
-  {"mode": "asr", "items": [{id, path, lang}]}
-      -> {id, text, words: [{w, start, end, p}]}   (base.en for en, else base)
+  {"mode": "asr", "model": "base", "items": [{id, path, lang}]}
+      -> {id, text, words: [{w, start, end, p}]}   (<model>.en for en, else <model>;
+                                                    model: base (default), small, medium)
   {"mode": "voices"}
       -> {id, voice}
 
@@ -124,10 +125,14 @@ def load_16k(path):
 
 def asr(engine, job):
     items = job.get("items") or []
+    size = job.get("model") or "base"
+    if size not in ("base", "small", "medium"):
+        sys.stderr.write(f"unknown whisper model {size!r}; expected base|small|medium\n")
+        sys.exit(1)
     for i, it in enumerate(items, 1):
         lang = it.get("lang") or "en"
         english = lang == "en"
-        model = engine.whisper("base.en" if english else "base")
+        model = engine.whisper(f"{size}.en" if english else size)
         language = "en" if english else (None if lang in ("na", "auto", "mixed") else lang)
         segments, _ = model.transcribe(load_16k(it["path"]), language=language, beam_size=5, word_timestamps=True)
         words, texts = [], []

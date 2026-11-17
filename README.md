@@ -63,7 +63,7 @@ On first use the agent runs `setup.mjs --check` and, if anything is missing, ask
 
 ### Skills
 
-The three skills hand work to each other: write with `deck-script`, render with `deck-voice`, then shape the sound with `deck-mix`. All three ship the same thirteen guides (script format, writing for the ear, domains, delivery, nonverbals, casting, sound sourcing, mixing, mastering, captions, setup, your voice, ethics and licensing) and the same scripts.
+The three skills hand work to each other: write with `deck-script`, render with `deck-voice`, then shape the sound with `deck-mix`. All three ship the same fourteen guides (script format, writing for the ear, domains, delivery, nonverbals, casting, Qwen3 voices, sound sourcing, mixing, mastering, captions, setup, your voice, ethics and licensing) and the same scripts.
 
 #### `deck-script`
 
@@ -74,6 +74,8 @@ Writes words for the ear in the `*.audio.md` format the pipeline renders: one sp
 #### `deck-voice`
 
 Renders a script on your machine with Supertonic 3: ten voices (F1–F5, M1–M5, measured for pitch and pace), 31 languages, the delivery presets, native laughs and spliced CC0 nonverbals. Every line is transcribed and re-rendered if it misreads, skips a word or speaks a tag; then it mixes, masters to the domain's loudness and writes stems, captions, `timeline.json`, `audio_meta.json` and `CREDITS.md`. It also owns setup, auditions and your own voice.
+
+On Apple Silicon Macs it can also cast Qwen3-TTS voices (`qwen:ryan` and eight more, or a voice designed from a description), an opt-in install of about 3.1 GB (weights Apache-2.0, mlx-audio runner MIT). Emotion goes to Qwen as an instruction, and a respell lexicon (`lexicon:` in the script) fixes terms an engine misreads without changing the captions.
 
 ```sh
 node scripts/setup.mjs --check

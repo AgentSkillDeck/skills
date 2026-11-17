@@ -24,6 +24,8 @@ Reading the table:
 - **Words/s differs by up to 25 %.** M3 (3.47) and F4 (3.33) are brisk; F3 (2.75) is slow. To even a pair out, set a cast speed: `M3: { voice: M3, speed: 0.92 }` brings M3 near 3.2.
 - **Gender of the nonverbal sample follows the voice letter.** M voices get male breaths and gasps, F voices female. In the default `auto` mode a laugh is the voice's own; every other nonverbal is a sample ([nonverbal](nonverbal.md)).
 
+On Apple Silicon there are nine more voices, Qwen3-TTS (`qwen:ryan`, `qwen:aiden` and others), plus voices designed from a description; see [qwen3](qwen3.md). The casting rules below apply to them too: contrast scene partners by gender or pitch.
+
 ## Casting rules
 
 1. **One narrator per piece.** The narrator is the listener's anchor. Switching narrators mid-piece reads as a mistake. Audiobooks: one narrator; character voices are allowed for dialogue.

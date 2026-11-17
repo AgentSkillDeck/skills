@@ -18,6 +18,14 @@ Read this before producing anything that will be published, sold or played to pe
 - The license also bars placing generated content in any context **without clearly disclosing that it is machine generated**. Treat disclosure as required for anything published.
 - Credit Supertonic in `CREDITS.md` (written automatically) and keep that credit with the published audio.
 
+## The optional voice model: Qwen3-TTS
+
+- Used only for `qwen:<voice>` casts on Apple Silicon ([qwen3](qwen3.md)). The model weights (Qwen3-TTS by the Qwen team, Alibaba Cloud) are **Apache-2.0**: commercial use allowed, keep the licence notice. https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice
+- The runner, mlx-audio, is **MIT** (https://github.com/Blaizzy/mlx-audio). The 8-bit MLX conversions come from mlx-community on Hugging Face.
+- Apache-2.0 has no use restrictions like OpenRAIL-M, but the rules below still apply: no impersonation, consent for real voices, disclosure of synthetic speech. A VoiceDesign `describe:` must never name or imitate a real person.
+- `CREDITS.md` adds the Qwen3-TTS and mlx-audio line, and the voice used for each speaker, automatically.
+- Supertonic's repository is archived (read-only). The model and its licence are unchanged; the pinned package keeps working.
+
 ## Real voices: only with consent, never impersonation
 
 - The ten voices are synthetic presets, not people. Never present one as a real, named person ("read by Morgan Freeman", "a message from our CEO") unless that person recorded it.
@@ -39,7 +47,7 @@ Read this before producing anything that will be published, sold or played to pe
 | meditation | Credits and description. Do not present it as therapy or medical treatment. |
 | video | Credits or description, plus the platform's AI-content label where it exists. |
 
-A short disclosure line that works everywhere: "Voices generated with Supertonic 3, a synthetic text-to-speech model." With a clone: "Includes an AI clone of <name>'s voice, made with their consent."
+A short disclosure line that works everywhere: "Voices generated with Supertonic 3, a synthetic text-to-speech model." (With Qwen voices: "Voices generated with Qwen3-TTS, a synthetic text-to-speech model.") With a clone: "Includes an AI clone of <name>'s voice, made with their consent."
 
 ## Sounds and music
 

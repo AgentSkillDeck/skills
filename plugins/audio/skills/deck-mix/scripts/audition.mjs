@@ -11,9 +11,11 @@ import { DELIVERY_PRESETS, EMOTION_NAMES } from './lib/presets.mjs';
 import { layoutTimeline, buildDialogueStem } from './lib/mix.mjs';
 import { hasFfmpeg, run } from './lib/ffmpeg.mjs';
 import { SetupError } from './lib/engine.mjs';
-import { selectEngine, synthBatch, nonverbalClip, exitCodeFor, VOICES } from './lib/render.mjs';
+import { selectEngine, synthBatch, nonverbalClip, exitCodeFor, isQwen, VOICES } from './lib/render.mjs';
+import { parseVoice, QWEN_SPEAKERS } from './lib/voices.mjs';
 
-const USAGE = 'Usage: node scripts/audition.mjs "<line>" --out <dir> [--voices all|F1,M3] [--emotion name] [--lang en] [--seed 0] [--draft]';
+const USAGE = 'Usage: node scripts/audition.mjs "<line>" --out <dir> [--voices all|qwen|F1,M3,qwen:ryan] [--describe "a voice in words"] [--style "persona"] [--emotion name] [--lang en] [--seed 0] [--draft]';
+const QWEN_VOICES = Object.keys(QWEN_SPEAKERS).map((v) => `qwen:${v}`);
 
 // Measured on one sentence, seed 0 (median pitch, pitch range, words per second).
 export const VOICE_NOTES = {
@@ -27,14 +29,17 @@ export const VOICE_NOTES = {
   M3: 'male, deep (96 Hz), steady, quick 3.5 words/s',
   M4: 'male, mid (120 Hz), moderate range, 3.0 words/s',
   M5: 'male, deep (89 Hz), steady, 2.9 words/s',
+  ...Object.fromEntries(Object.entries(QWEN_SPEAKERS).map(([v, q]) => [`qwen:${v}`, `Qwen3, ${q.gender}, native ${q.native}`])),
+  'qwen:design': 'Qwen3 VoiceDesign, the voice from --describe',
 };
+const fileOf = (voice) => voice.replace(/:/g, '-');
 
 function parse(argv) {
   let parsed;
   try {
     parsed = parseArgs({
       args: argv, allowPositionals: true,
-      options: { out: { type: 'string' }, voices: { type: 'string' }, emotion: { type: 'string' }, lang: { type: 'string' }, seed: { type: 'string' }, draft: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } },
+      options: { out: { type: 'string' }, voices: { type: 'string' }, describe: { type: 'string' }, style: { type: 'string' }, emotion: { type: 'string' }, lang: { type: 'string' }, seed: { type: 'string' }, draft: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } },
     });
   } catch (e) {
     throw new UsageError(`${e.message}\n${USAGE}`);
@@ -44,21 +49,31 @@ function parse(argv) {
   const line = positionals.join(' ').trim();
   if (!line) throw new UsageError(`Give the line to read, in quotes.\n${USAGE}`);
   if (!values.out) throw new UsageError(`--out <dir> is required.\n${USAGE}`);
-  const want = (values.voices ?? 'all').trim();
-  const voices = want.toLowerCase() === 'all' ? VOICES : [...new Set(want.split(',').map((v) => v.trim().toUpperCase()).filter(Boolean))];
-  const bad = voices.filter((v) => !VOICES.includes(v));
-  if (!voices.length || bad.length) throw new UsageError(`Unknown voice${bad.length > 1 ? 's' : ''} ${bad.join(', ')}. Use all or a comma list of ${VOICES.join(', ')}.\n${USAGE}`);
+  const describe = values.describe?.trim();
+  const want = (values.voices ?? (describe ? 'qwen:design' : 'all')).trim();
+  // all: the Supertonic presets; qwen: the nine Qwen3 voices (plus qwen:design with --describe).
+  const expand = (v) => (v.toLowerCase() === 'all' ? VOICES : v.toLowerCase() === 'qwen' ? [...QWEN_VOICES, ...(describe ? ['qwen:design'] : [])] : [v]);
+  const asked = want.split(',').map((v) => v.trim()).filter(Boolean).flatMap(expand);
+  const bad = [];
+  const voices = [...new Set(asked.map((v) => {
+    const f = parseVoice(v);
+    if (f.kind === 'preset' || f.kind === 'qwen') return f.voice;
+    bad.push(v);
+    return null;
+  }).filter(Boolean))];
+  if (!voices.length || bad.length) throw new UsageError(`Unknown voice${bad.length > 1 ? 's' : ''} ${bad.join(', ')}. Use all, qwen, or a comma list of ${VOICES.join(', ')}, ${QWEN_VOICES.join(', ')}, qwen:design.\n${USAGE}`);
+  if (voices.includes('qwen:design') && !describe) throw new UsageError(`qwen:design needs --describe "the voice in words".\n${USAGE}`);
   const emotion = values.emotion?.trim().toLowerCase();
   if (emotion && !DELIVERY_PRESETS[emotion]) throw new UsageError(`Unknown emotion "${emotion}". Valid emotions: ${EMOTION_NAMES.join(', ')}.\n${USAGE}`);
   if (values.seed !== undefined && !/^\d+$/.test(values.seed)) throw new UsageError(`--seed must be a whole number.\n${USAGE}`);
-  return { line, out: values.out, voices, emotion, lang: values.lang?.trim() || 'en', seed: Number(values.seed ?? 0), draft: Boolean(values.draft) };
+  return { line, out: values.out, voices, describe, style: values.style?.trim() || undefined, emotion, lang: values.lang?.trim() || 'en', seed: Number(values.seed ?? 0), draft: Boolean(values.draft) };
 }
 
 export async function audition(opts, ctx = {}) {
   const env = ctx.env ?? process.env;
   const log = ctx.progress ?? (() => {});
   if (!(await (ctx.hasFfmpeg ?? hasFfmpeg)())) throw new SetupError('ffmpeg not found. Install it (macOS: `brew install ffmpeg`, Linux: `sudo apt install ffmpeg`).');
-  const engine = await selectEngine({ draft: opts.draft, engine: ctx.engine, env, checkSetupImpl: ctx.checkSetup });
+  const engine = await selectEngine({ draft: opts.draft, engine: ctx.engine, env, checkSetupImpl: ctx.checkSetup, qwen: opts.voices.some((v) => isQwen({ voice: v })), checkQwen3Impl: ctx.checkQwen3Setup });
   const out = resolve(opts.out);
   const cacheDir = join(out, '.cache');
   mkdirSync(cacheDir, { recursive: true });
@@ -66,7 +81,7 @@ export async function audition(opts, ctx = {}) {
   if (engine.mode === 'draft') warnings.push('draft voice: the system voice reads every take (timing only); the voices below are not Supertonic');
 
   // One script line per voice, through the real planner (nonverbal splice, delivery preset).
-  const cast = Object.fromEntries(opts.voices.map((v) => [v, { voice: v }]));
+  const cast = Object.fromEntries(opts.voices.map((v) => [v, { voice: v, ...(isQwen({ voice: v }) && opts.style ? { style: opts.style } : {}), ...(v === 'qwen:design' ? { describe: opts.describe } : {}) }]));
   const lines = opts.voices.map((v, i) => ({ n: i + 1, kind: 'speech', speaker: v, emotion: opts.emotion, modifiers: [], text: opts.line, lang: opts.lang }));
   const plan = planRender({ meta: { lang: opts.lang, cast }, lines }, { preset: 'education' });
   const speech = plan.items.filter((i) => i.kind === 'speech').map((it) => ({ ...it, seed: opts.seed }));
@@ -88,12 +103,12 @@ export async function audition(opts, ctx = {}) {
   for (const voice of opts.voices) {
     const mine = items.filter((it) => it.speaker === voice || (it.kind === 'pause' && items.find((x) => x.n === it.n)?.speaker === voice));
     const tl = layoutTimeline({ meta: {}, items: mine }, rendered, { gap_s: 0, lead_s: 0.15, tail_s: 0.3 });
-    const wav = join(cacheDir, 'audition', `${voice}.wav`);
+    const wav = join(cacheDir, 'audition', `${fileOf(voice)}.wav`);
     await buildDialogueStem(tl, wav, { speakerDir: join(cacheDir, 'audition', 'speakers') });
-    const mp3 = join(out, `${voice}.mp3`);
+    const mp3 = join(out, `${fileOf(voice)}.mp3`);
     await run(['-i', wav, '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-ar', '44100', '-ac', '1', '-c:a', 'libmp3lame', '-q:a', '2', mp3]);
-    rows.push({ voice, file: `${voice}.mp3`, duration_s: tl.duration_s, note: VOICE_NOTES[voice] ?? '' });
-    log(`      ${voice}.mp3 (${tl.duration_s.toFixed(2)} s)`);
+    rows.push({ voice, file: `${fileOf(voice)}.mp3`, duration_s: tl.duration_s, note: VOICE_NOTES[voice] ?? '' });
+    log(`      ${fileOf(voice)}.mp3 (${tl.duration_s.toFixed(2)} s)`);
   }
   rmSync(join(cacheDir, 'audition', 'speakers'), { recursive: true, force: true });
 
@@ -107,7 +122,8 @@ export async function audition(opts, ctx = {}) {
     '|---|---|---|---|',
     ...rows.map((r) => `| ${r.voice} | ${r.file} | ${r.duration_s.toFixed(1)} s | ${r.note} |`),
     '',
-    'Listen, pick one per character, then cast it in the script front matter, for example `ELI: { voice: M3 }`.',
+    ...(opts.describe ? [`Designed voice: "${opts.describe}"`, ''] : []),
+    'Listen, pick one per character, then cast it in the script front matter, for example `ELI: { voice: M3 }` or `NARRATOR: { voice: qwen:ryan }`.',
     ...warnings.map((w) => `\nWarning: ${w}`),
     '',
   ].join('\n');

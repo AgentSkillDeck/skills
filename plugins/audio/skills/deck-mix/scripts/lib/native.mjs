@@ -42,7 +42,7 @@ export function baseVoice(voice, { env = process.env } = {}) {
   const p = parseVoice(voice);
   if (p.kind === 'preset') return p.voice;
   if (p.kind === 'clone') return p.base ?? readCloneVoice(p.name, { env })?.base ?? null;
-  if (p.kind === 'record') return null;
+  if (p.kind === 'record' || p.kind === 'qwen') return null; // Qwen3 has no native tags: always samples
   return String(voice).trim().toUpperCase();
 }
 

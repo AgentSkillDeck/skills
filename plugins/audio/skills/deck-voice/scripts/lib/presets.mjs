@@ -113,3 +113,41 @@ export const SPEED_MAX = 2.0;
 export function clampSpeed(speed) {
   return Math.min(SPEED_MAX, Math.max(SPEED_MIN, speed));
 }
+
+// Qwen3-TTS takes delivery as a natural-language instruction (`instruct`), so
+// a Qwen voice gets this sentence instead of the speed/gain/fx chain above
+// (only pre_s/post_s still apply). Modifiers add a clause. A cast `style:`
+// ("documentary narrator") is prefixed, so the persona stays constant and the
+// emotion changes per line.
+export const QWEN_INSTRUCT = {
+  neutral: 'Speak naturally and clearly at a steady, conversational pace.',
+  happy: 'Speak warmly and cheerfully, with a bright, smiling tone.',
+  excited: 'Speak with high energy and excitement, quick and animated.',
+  sad: 'Speak slowly and quietly with a heavy, sorrowful tone.',
+  angry: 'Speak with sharp, forceful anger, clipped and intense.',
+  scared: 'Speak in a frightened, breathless voice, quick and unsteady.',
+  hushed: 'Speak in a soft, hushed near-whisper, as if not to be overheard.',
+  calm: 'Speak in a calm, measured, unhurried voice with gentle pauses.',
+  surprised: 'Speak with genuine surprise, rising and wide-eyed.',
+  sarcastic: 'Speak with dry, deadpan sarcasm.',
+  tender: 'Speak tenderly and softly, warm and intimate.',
+  tired: 'Speak slowly and wearily, low energy, as if exhausted.',
+  authoritative: 'Speak with confident authority, firm, clear and assured.',
+  nervous: 'Speak nervously, slightly hesitant and uneasy.',
+};
+
+export const QWEN_MODIFIERS = {
+  slow: 'Take it slower than usual.',
+  fast: 'Take it a little faster than usual.',
+  loud: 'Project the voice more.',
+  soft: 'Keep the voice soft and low.',
+};
+
+// The instruct sentence for one line: persona (cast style), emotion, modifiers.
+export function qwenInstruct({ emotion, modifiers = [], style } = {}) {
+  const parts = [];
+  if (style) parts.push(`${String(style).trim().replace(/[.\s]+$/, '')}.`);
+  parts.push(QWEN_INSTRUCT[emotion ?? 'neutral'] ?? QWEN_INSTRUCT.neutral);
+  for (const m of modifiers) if (QWEN_MODIFIERS[m]) parts.push(QWEN_MODIFIERS[m]);
+  return parts.join(' ');
+}

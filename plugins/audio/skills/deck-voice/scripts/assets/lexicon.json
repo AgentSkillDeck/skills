@@ -1,0 +1,8 @@
+{
+  "_about": "Bundled respellings for terms a voice engine misreads. `terms` apply to every engine; an engine's own section only to it. Each entry was rendered and transcribed with whisper small and medium before it was added. Scripts add their own under `lexicon:`; ~/.agentskilldeck/lexicon.json holds the user's.",
+  "terms": {},
+  "qwen3": {
+    "_git": "ryan, 'Then run git status and git commit.', seeds 0-1, 17 Nov 2026: git 3/4 heard as git (small 1/2, medium 2/2), ghit 4/4, gitt 3/4, ghitt 2/4, jit 0/4.",
+    "git": "ghit"
+  }
+}

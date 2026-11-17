@@ -38,12 +38,23 @@ A small YAML subset: scalars, inline `{ k: v }` maps and one level of nesting. `
 | `lang` | a Supertonic language code (below) | `en` |
 | `preset` | `education`, `audiobook`, `drama`, `podcast`, `playbook`, `ad`, `meditation`, `kids`, `language`, `video` | `education` |
 | `nonverbals` | `auto`, `sample`, `model`, `pause` (`auto`: the engine's own laugh, as a joined stack; samples for the rest) | `auto` |
-| `cast` | `NAME: { voice: F1–F5 or M1–M5, speed: 0.8–1.2, lang: xx }`; `voice: record` (the user reads this character's lines) or `voice: clone:<name>` (a clone of the user's voice), see [your-voice](your-voice.md) | `NARRATOR` gets `F4` |
+| `cast` | `NAME: { voice: F1–F5 or M1–M5, speed: 0.8–1.2, lang: xx }`; `voice: qwen:<voice>` with optional `style:`, or `qwen:design` with `describe:` and `gender:` (Qwen3 on Apple Silicon, see [qwen3](qwen3.md)); `voice: record` (the user reads this character's lines) or `voice: clone:<name>` (a clone of the user's voice), see [your-voice](your-voice.md) | `NARRATOR` gets `F4` |
+| `lexicon` | `term: respelling` lines, one per line, indented (quote terms that start with `-`): how the engine should say a word it misreads. See below | none |
 | `music` | `{ search: "query", level: low or high or -18dB }` or `{ path: ./bed.mp3 }` | no bed |
 
 `--preset` on the command line overrides `preset:`. A cast `speed` multiplies everything else (see [delivery](delivery.md) for the speed stack).
 
 Language codes: en, ko, ja, ar, bg, cs, da, de, el, es, et, fi, fr, hi, hr, hu, id, it, lt, lv, nl, pl, pt, ro, ru, sk, sl, sv, tr, uk, vi, and `na` for unknown.
+
+## Respelling: `lexicon:`
+
+```yaml
+lexicon:
+  kubectl: cube control
+  "--force-with-lease": force with lease
+```
+
+The engine reads the respelling; captions, `timeline.json` and `qa.json` `text` keep the written word (`qa.json` adds `said` when a line was respelled), and QA checks the take against the respelling. Matching is whole-term and case-insensitive. A bundled lexicon (`assets/lexicon.json`) covers terms measured to fail; `~/.agentskilldeck/lexicon.json` holds the user's own, and the script's entries win over both. Respell only after a line fails QA or sounds wrong, and check it with a render.
 
 ## Speaker lines
 

@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { runWorker, startWorker, draftSynth as defaultDraftSynth, SetupError, EngineError, EngineTextError, DEFAULT_STEPS, CLONE_PY, cloneVenvDir, venvPython } from './engine.mjs';
+import { runWorker, startWorker, draftSynth as defaultDraftSynth, SetupError, EngineError, EngineTextError, DEFAULT_STEPS, CLONE_PY, QWEN3_PY, cloneVenvDir, venvPython } from './engine.mjs';
 import { run, readWavInfo, isPcm16Mono, SR } from './ffmpeg.mjs';
 import { parseVoice, loadCloneVoice } from './voices.mjs';
 import { parseAstats } from './master.mjs';
@@ -14,6 +14,7 @@ import { PlanError } from './plan.mjs';
 
 export const VOICES = ['F1', 'F2', 'F3', 'F4', 'F5', 'M1', 'M2', 'M3', 'M4', 'M5'];
 export const INSTALL_HINT = 'Run `node scripts/setup.mjs --check`, then `node scripts/setup.mjs --install` (asks once, downloads ~550 MB), or pass --draft for a timing draft with the system voice.';
+export const QWEN3_INSTALL_HINT = 'The Qwen3-TTS engine is not installed. It needs macOS on Apple Silicon. Run `node scripts/setup.mjs --check`; once the user agrees (about 3.1 GB, asked once), `node scripts/setup.mjs --install-qwen3`. Elsewhere, cast Supertonic voices (F1-F5, M1-M5), or pass --draft for a timing draft.';
 export const CLONE_INSTALL_HINT = 'The free voice-cloning engine (Chatterbox voice conversion) is not installed. Run `node scripts/setup.mjs --check`; once the user agrees (about 2.6 GB, asked once), `node scripts/setup.mjs --install-clone`. Or pass --draft for a timing draft.';
 
 export const sha = (obj) => createHash('sha256').update(JSON.stringify(obj)).digest('hex');
@@ -31,8 +32,28 @@ export function exitCodeFor(e) {
 // clone: the run has clone:<name> voices, so the clone engine (engine.clone =
 // {python, script}) is needed too: `engine.clone`, AGENTSKILLDECK_CLONE_SCRIPT
 // (+ AGENTSKILLDECK_CLONE_PYTHON), or the clone venv.
-export async function selectEngine({ draft, engine, env = process.env, checkSetupImpl, clone = false, checkCloneImpl }) {
+// qwen: the run has qwen:<voice> lines, so engine.qwen ({python, script}) is
+// needed: `engine.qwen`, AGENTSKILLDECK_QWEN3_SCRIPT, or the checked install.
+// The Supertonic venv is still needed for whisper QA (and any Supertonic lines).
+export async function selectEngine({ draft, engine, env = process.env, checkSetupImpl, clone = false, checkCloneImpl, qwen = false, checkQwen3Impl }) {
   if (draft) return { mode: 'draft' };
+  const e = await selectBase({ engine, env, checkSetupImpl });
+  if (clone) e.clone = await selectClone({ engine, env, checkCloneImpl });
+  if (qwen) e.qwen = await selectQwen3({ engine, env, checkQwen3Impl });
+  return e;
+}
+
+async function selectQwen3({ engine, env, checkQwen3Impl }) {
+  if (engine?.qwen) return { ...engine.qwen };
+  const script = env.AGENTSKILLDECK_QWEN3_SCRIPT;
+  if (script) return { script, python: env.AGENTSKILLDECK_QWEN3_PYTHON ?? (script.endsWith('.py') ? undefined : process.execPath) };
+  const check = checkQwen3Impl ?? (await import('../setup.mjs')).checkQwen3Setup;
+  const s = await check({ env });
+  if (!s.ok) throw new SetupError(s.supported === false ? `Qwen3 voices need macOS on Apple Silicon. Cast Supertonic voices (F1-F5, M1-M5) on this machine, or pass --draft.` : QWEN3_INSTALL_HINT);
+  return { script: QWEN3_PY, python: s.python };
+}
+
+async function selectBase({ engine, env, checkSetupImpl }) {
   let e;
   const script = engine?.script ?? env.AGENTSKILLDECK_ENGINE_SCRIPT;
   if (script) {
@@ -47,7 +68,6 @@ export async function selectEngine({ draft, engine, env = process.env, checkSetu
     }
     e = { mode: 'engine', python: s.python };
   }
-  if (clone) e.clone = await selectClone({ engine, env, checkCloneImpl });
   return e;
 }
 
@@ -75,7 +95,13 @@ const workerOpts = (engine, env, onProgress) => ({
   env, onProgress,
 });
 
-export const synthKey = (engine, it) => sha({ v: 1, engine: engine.mode, steps: DEFAULT_STEPS, text: it.text, voice: it.voice, lang: it.lang ?? 'en', speed: it.speed ?? 1, seed: it.seed ?? 0 });
+// A Qwen3 take also depends on the model and the instruction (and the voice description for qwen:design).
+const QWEN3_KEY_MODEL = (env) => env.AGENTSKILLDECK_QWEN3_MODEL || 'Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit';
+const QWEN3_KEY_DESIGN = (env) => env.AGENTSKILLDECK_QWEN3_DESIGN_MODEL || 'Qwen3-TTS-12Hz-1.7B-VoiceDesign-8bit';
+export const isQwen = (it) => parseVoice(it.voice).kind === 'qwen';
+export const synthKey = (engine, it, env = process.env) => (isQwen(it) && engine.mode === 'engine'
+  ? sha({ v: 1, engine: 'qwen3', model: parseVoice(it.voice).speaker === 'design' ? QWEN3_KEY_DESIGN(env) : QWEN3_KEY_MODEL(env), text: it.text, voice: it.voice, instruct: it.instruct ?? '', describe: it.describe ?? '', lang: it.lang ?? 'en', seed: it.seed ?? 0 })
+  : sha({ v: 1, engine: engine.mode, steps: DEFAULT_STEPS, text: it.text, voice: it.voice, lang: it.lang ?? 'en', speed: it.speed ?? 1, seed: it.seed ?? 0 }));
 
 // A converted take: the Supertonic take it came from, the reference audio and the seed.
 export const cloneKey = (baseKey, refSha, seed) => sha({ v: 1, convert: 'chatterbox-vc-0.1.7', base: baseKey, ref: refSha, seed: seed ?? 0 });
@@ -163,7 +189,7 @@ async function synthPlain(items, { cacheDir, engine, env = process.env, draftSyn
   const out = new Map();
   const misses = new Map();
   for (const it of items) {
-    const key = synthKey(engine, it);
+    const key = synthKey(engine, it, env);
     const path = join(dir, `${key}.wav`);
     const meta = `${path}.json`;
     if (!out.has(key) && existsSync(path) && existsSync(meta)) {
@@ -180,11 +206,40 @@ async function synthPlain(items, { cacheDir, engine, env = process.env, draftSyn
   };
   if (misses.size && engine.mode === 'engine') {
     const tmp = join(dir, 'tmp');
-    const results = await runWorker({
-      mode: 'synth', out_dir: tmp, ...(calibrate ? { calibrate: true } : {}),
-      items: [...misses].map(([key, it]) => ({ id: key, text: it.text, voice: it.voice, lang: it.lang ?? 'en', speed: it.speed ?? 1, seed: it.seed ?? 0 })),
-    }, workerOpts(engine, env, onProgress));
-    for (const r of results) save(r.id, r.path, r.duration_s);
+    const qwenMisses = [...misses].filter(([, it]) => isQwen(it));
+    const stMisses = [...misses].filter(([, it]) => !isQwen(it));
+    if (stMisses.length) {
+      const results = await runWorker({
+        mode: 'synth', out_dir: tmp, ...(calibrate ? { calibrate: true } : {}),
+        items: stMisses.map(([key, it]) => ({ id: key, text: it.text, voice: it.voice, lang: it.lang ?? 'en', speed: it.speed ?? 1, seed: it.seed ?? 0 })),
+      }, workerOpts(engine, env, onProgress));
+      for (const r of results) save(r.id, r.path, r.duration_s);
+    }
+    if (qwenMisses.length) {
+      if (!engine.qwen) throw new SetupError(QWEN3_INSTALL_HINT);
+      let results;
+      try {
+        results = await runWorker({
+          mode: 'synth', out_dir: tmp,
+          items: qwenMisses.map(([key, it]) => ({ id: key, text: it.text, voice: it.voice, speaker: parseVoice(it.voice).speaker, instruct: it.instruct ?? '', ...(it.describe ? { describe: it.describe } : {}), lang: it.lang ?? 'en', seed: it.seed ?? 0 })),
+        }, workerOpts({ script: QWEN3_PY, ...engine.qwen }, env, onProgress));
+      } catch (e) {
+        if (e instanceof SetupError) throw new SetupError(`${QWEN3_INSTALL_HINT}\n${e.message}`);
+        throw e;
+      }
+      // Qwen3 speaks at 24 kHz: store 44.1 kHz mono s16 like every other take.
+      for (const r of results) {
+        const dest = join(dir, `${r.id}.wav`);
+        const src = await readWavInfo(r.path);
+        if (isPcm16Mono(src) && src.sampleRate === SR) renameSync(r.path, dest);
+        else {
+          await run(['-i', r.path, '-af', `aresample=${SR}`, '-ac', '1', '-ar', String(SR), '-c:a', 'pcm_s16le', `${dest}.part.wav`]);
+          renameSync(`${dest}.part.wav`, dest);
+        }
+        const info = await readWavInfo(dest);
+        save(r.id, dest, Math.round((info.samples / info.sampleRate) * 10000) / 10000);
+      }
+    }
     rmSync(tmp, { recursive: true, force: true });
   } else if (misses.size) {
     let i = 0;
@@ -195,17 +250,18 @@ async function synthPlain(items, { cacheDir, engine, env = process.env, draftSyn
     }
   }
   return items.map((it) => {
-    const r = out.get(synthKey(engine, it));
+    const r = out.get(synthKey(engine, it, env));
     if (!r) throw new EngineError(`the engine returned no audio for "${it.text}"`);
     return r;
   });
 }
 
 // takes: [{key (synth key), path, lang}] → same order: {text, words: [{w, start, end, p}], cached}.
-export async function asrBatch(takes, { cacheDir, engine, env = process.env, onProgress } = {}) {
+// model: whisper size (base, small, medium); default base.
+export async function asrBatch(takes, { cacheDir, engine, env = process.env, onProgress, model } = {}) {
   const dir = join(cacheDir, 'asr');
   mkdirSync(dir, { recursive: true });
-  const keyOf = (t) => sha({ v: 1, synth: t.key, lang: t.lang ?? 'en' });
+  const keyOf = (t) => sha({ v: 1, synth: t.key, lang: t.lang ?? 'en', ...(model && model !== 'base' ? { model } : {}) });
   const out = new Map();
   const misses = new Map();
   for (const t of takes) {
@@ -216,7 +272,7 @@ export async function asrBatch(takes, { cacheDir, engine, env = process.env, onP
     else misses.set(key, t);
   }
   if (misses.size) {
-    const results = await runWorker({ mode: 'asr', items: [...misses].map(([key, t]) => ({ id: key, path: t.path, lang: t.lang ?? 'en' })) }, workerOpts(engine, env, onProgress));
+    const results = await runWorker({ mode: 'asr', ...(model ? { model } : {}), items: [...misses].map(([key, t]) => ({ id: key, path: t.path, lang: t.lang ?? 'en' })) }, workerOpts(engine, env, onProgress));
     for (const r of results) {
       const rec = { text: r.text ?? '', words: r.words ?? [] };
       writeFileSync(join(dir, `${r.id}.json`), JSON.stringify(rec) + '\n');
@@ -274,7 +330,7 @@ export async function toWav(src, dest) {
 // <out>/assets/nonverbal with its license sidecar), then a licensed search.
 // Returns {path (wav), duration_s, asset, warning?} or {warning}.
 export async function nonverbalClip(item, { outDir, cacheDir, offline, variant = 1, sources, fetchImpl, freesoundToken, projectDir }) {
-  const cue = { type: 'nv', tag: item.tag, voice: item.base_voice ?? item.voice, variant };
+  const cue = { type: 'nv', tag: item.tag, voice: item.base_voice ?? item.voice, variant, ...(item.gender ? { gender: item.gender } : {}) };
   const r = await resolveCue(cue, { projectDir, offline, destDir: join(outDir, 'assets'), fetchImpl, freesoundToken, sources });
   if (!r.path) return { warning: `${item.id}: ${r.warning ?? `no <${item.tag}> clip`}` };
   let assetPath = r.path;

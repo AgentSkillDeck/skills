@@ -5,7 +5,8 @@
 // asr:   reads that chunk and "hears" the text back with even word times.
 // Env switches: FAKE_ENGINE_TAG_TAKE0=1 → take 0 is heard with a spoken
 // "breath" (forces a retake); FAKE_ENGINE_SPEAK_COUGH=1 → every take of a text
-// with an inline <cough> is heard as "Cough."; FAKE_ENGINE_LOG=<file> → one line per job.
+// with an inline <cough> is heard as "Cough."; FAKE_ENGINE_LOG=<file> → one line per job;
+// FAKE_ENGINE_JOBS=<file> → each job as one JSON line. Also stands in for engine/qwen3.py.
 // A file without the chunk (a cleaned "recording") is heard as FAKE_ENGINE_ASR_JSON
 // ({text, words} file: a whole take with word times) or FAKE_ENGINE_ASR_TEXT.
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -52,6 +53,7 @@ process.stdin.on('end', () => {
   const job = JSON.parse(input);
   const items = job.items ?? [];
   if (process.env.FAKE_ENGINE_LOG) appendFileSync(process.env.FAKE_ENGINE_LOG, `${job.mode} ${items.length}\n`);
+  if (process.env.FAKE_ENGINE_JOBS) appendFileSync(process.env.FAKE_ENGINE_JOBS, JSON.stringify(job) + '\n');
   items.forEach((it, i) => {
     let result;
     if (job.mode === 'synth') {

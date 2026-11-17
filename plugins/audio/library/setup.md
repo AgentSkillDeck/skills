@@ -1,6 +1,6 @@
 # Setup: ask once, then install
 
-The engine runs on the user's machine: Supertonic 3 for voices, faster-whisper for QA, ffmpeg for everything audio. Nothing is installed without the user's say-so.
+The engine runs on the user's machine: Supertonic 3 for voices (plus optional Qwen3-TTS on Apple Silicon, see [qwen3](qwen3.md)), faster-whisper for QA, ffmpeg for everything audio. Nothing is installed without the user's say-so.
 
 ## 1. Check
 
@@ -57,12 +57,20 @@ node scripts/setup.mjs --install-clone
 
 It creates the venv, installs `chatterbox-tts==0.1.7` and `setuptools<81` (the watermarker needs `pkg_resources`), then loads the converter once (the weight download). `~/.agentskilldeck/config.json` records `"clone_install_ok": true`. If the user declines, cast a preset or `voice: record` instead. It runs on Apple-silicon GPUs (MPS), CUDA or the CPU; set `AGENTSKILLDECK_CLONE_DEVICE=cpu` to force the CPU.
 
+## Optional: Qwen3 voices (Apple Silicon)
+
+Only when the user wants `qwen:<voice>` casts. macOS on Apple Silicon only; about 3.1 GB. `--check` reports it under `"qwen3"`, never failing the check. The question to ask, the install command (`--install-qwen3`, plus `--design` for VoiceDesign) and the voices are in [qwen3](qwen3.md). Whisper QA still runs in the main venv, so the main install is needed too.
+
 ## Overrides
 
 | Variable | Effect |
 |---|---|
 | `AGENTSKILLDECK_VENV` | use a different venv directory |
 | `AGENTSKILLDECK_CLONE_VENV` | use a different clone venv (default `~/.agentskilldeck/venv-clone`) |
+| `AGENTSKILLDECK_QWEN3_VENV` | use a different Qwen3 venv (default `~/.agentskilldeck/venv-qwen3`) |
+| `AGENTSKILLDECK_QWEN3_PYTHON` | a Python that already has `mlx-audio` (skips the Qwen3 venv) |
+| `AGENTSKILLDECK_QWEN3_MODEL`, `AGENTSKILLDECK_QWEN3_DESIGN_MODEL` | other Qwen3-TTS MLX conversions (default the 8-bit 1.7B CustomVoice and VoiceDesign) |
+| `AGENTSKILLDECK_LEXICON` | the user's respell lexicon (default `~/.agentskilldeck/lexicon.json`) |
 | `AGENTSKILLDECK_VOICES` | where clone voices live (default `~/.agentskilldeck/voices`) |
 | `AGENTSKILLDECK_CLONE_DEVICE` | `mps`, `cuda` or `cpu` for the clone engine |
 | `SUPERTONIC_CACHE_DIR` | where the voice model lives (default `~/.cache/supertonic3`) |

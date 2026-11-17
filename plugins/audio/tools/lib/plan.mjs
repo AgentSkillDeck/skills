@@ -3,7 +3,8 @@
 // consume. Each line is split at its nonverbal tags so the engine only
 // ever sees plain text (spec §7).
 
-import { DOMAIN_PRESETS, DELIVERY_PRESETS, EMOTION_NAMES, MODIFIERS, clampSpeed } from './presets.mjs';
+import { DOMAIN_PRESETS, DELIVERY_PRESETS, EMOTION_NAMES, MODIFIERS, clampSpeed, qwenInstruct } from './presets.mjs';
+import { loadLexicon, respell } from './lexicon.mjs';
 import { normaliseNonverbals, DEFAULT_LEVEL } from './nonverbal.mjs';
 import { assertEngineText } from './engine.mjs';
 import { NATIVE_STACK, stackOf, nativeOk, loadNativeTable, baseVoice } from './native.mjs';
@@ -87,7 +88,8 @@ function applyNonverbalMode(segments, mode, voice, table, env) {
 // spliceLines: script line numbers planned as `sample` whatever the mode (the
 // fallback for a line whose inline tag was spoken on every take).
 // env: where clone voices are looked up (AGENTSKILLDECK_VOICES), default process.env.
-export function planRender(parsed, { preset, voiceOverrides, spliceLines, nativeTable, env = process.env } = {}) {
+// lexicon: {term: respelling} (lib/lexicon.mjs), default the merged bundled + user + front-matter lexicon.
+export function planRender(parsed, { preset, voiceOverrides, spliceLines, nativeTable, lexicon, env = process.env } = {}) {
   const { meta, lines } = parsed;
   const table = nativeTable ?? loadNativeTable();
   const presetKey = preset ?? meta.preset ?? 'education';
@@ -98,6 +100,8 @@ export function planRender(parsed, { preset, voiceOverrides, spliceLines, native
     throw new PlanError(`Unknown nonverbals mode "${meta.nonverbals}". Expected one of: ${NONVERBAL_MODES.join(', ')}.`);
   }
   const docLang = meta.lang ?? DEFAULT_LANG;
+  const lex = lexicon ?? loadLexicon({ meta, env });
+  const qwenLex = lexicon ?? loadLexicon({ meta, env, engine: 'qwen3' });
 
   const items = [];
   // Ids are L<n>-<k>, unique across every item a script line produces
@@ -151,8 +155,22 @@ export function planRender(parsed, { preset, voiceOverrides, spliceLines, native
     const castVoice = resolveVoice(line.speaker, cast, voiceOverrides);
     const form = parseVoice(castVoice);
     if (form.kind === 'invalid') throw new PlanError(form.reason, { n: line.n });
-    const voice = form.kind === 'preset' && castVoice !== undefined ? form.voice : castVoice;
+    const voice = form.kind === 'preset' && castVoice !== undefined ? form.voice : form.kind === 'qwen' ? form.voice : castVoice;
     const emotion = line.emotion ?? null;
+    // Qwen3 takes delivery as an instruction, so the speed/gain/fx chain is
+    // not applied on top (pauses still are). qwen:design needs `describe:`.
+    const castEntry = voiceOverrides?.[line.speaker] ?? cast?.[line.speaker] ?? {};
+    let qwen = null;
+    if (form.kind === 'qwen') {
+      const describe = castEntry.describe ?? cast?.[line.speaker]?.describe;
+      if (form.speaker === 'design' && !String(describe ?? '').trim()) throw new PlanError(`${line.speaker} uses qwen:design but its cast entry has no describe: "..." (the voice, in words)`, { n: line.n });
+      qwen = {
+        engine: 'qwen3',
+        instruct: qwenInstruct({ emotion, modifiers: line.modifiers, style: castEntry.style ?? cast?.[line.speaker]?.style }),
+        ...(form.speaker === 'design' ? { describe: String(describe).trim() } : {}),
+      };
+    }
+    const gender = /^(male|female)$/i.test(String(castEntry.gender ?? '')) ? String(castEntry.gender).toLowerCase() : undefined;
 
     const { segments } = normaliseNonverbals(line.text ?? '');
 
@@ -174,21 +192,26 @@ export function planRender(parsed, { preset, voiceOverrides, spliceLines, native
     for (const seg of planned) {
       const id = idFor(line.n);
       if (seg.type === 'text') {
+        // text is what is written (captions); say, when the lexicon changed
+        // it, is what the engine reads and QA checks.
+        const say = respell(seg.text, qwen ? qwenLex : lex);
         // Last gate at plan time, so a bad line is a line-numbered script error (exit 1).
-        try { assertEngineText(seg.text, { voice, table, env }); } catch (e) { throw new PlanError(e.message, { n: line.n }); }
+        try { assertEngineText(say, { voice, table, env }); } catch (e) { throw new PlanError(e.message, { n: line.n }); }
         const item = {
           id, n: line.n, kind: 'speech', speaker: line.speaker, voice, lang, emotion,
-          text: seg.text, speed: effectiveSpeed, gain_db, pre_s: delivery.pre_s, post_s: delivery.post_s, seed: 0,
+          text: seg.text, ...(say !== seg.text ? { say } : {}),
+          speed: qwen ? 1 : effectiveSpeed, gain_db: qwen ? 0 : gain_db, pre_s: delivery.pre_s, post_s: delivery.post_s, seed: 0,
+          ...(qwen ?? {}),
         };
-        const at = nativePositions(seg.text, lang);
+        const at = nativePositions(say, lang);
         if (at.length) item.native_at = at;
-        if (delivery.af) item.af = delivery.af;
+        if (delivery.af && !qwen) item.af = delivery.af;
         items.push(item);
       } else if (seg.type === 'nv') {
         // Same delivery chain as the line it sits in, so a hushed line gets a hushed breath.
         // pre_s/post_s too: the layout takes them from a line's first/last segment.
-        const item = { id, n: line.n, kind: 'nv', speaker: line.speaker, voice, ...(form.kind === 'clone' ? { base_voice: baseVoice(voice, { env }) } : {}), lang, emotion, tag: seg.tag, gain_db, pre_s: delivery.pre_s, post_s: delivery.post_s };
-        if (delivery.af) item.af = delivery.af;
+        const item = { id, n: line.n, kind: 'nv', speaker: line.speaker, voice, ...(form.kind === 'clone' ? { base_voice: baseVoice(voice, { env }) } : {}), ...(gender ? { gender } : {}), lang, emotion, tag: seg.tag, gain_db: qwen ? 0 : gain_db, pre_s: delivery.pre_s, post_s: delivery.post_s };
+        if (delivery.af && !qwen) item.af = delivery.af;
         items.push(item);
       } else if (seg.type === 'pause') {
         items.push({ id, n: line.n, kind: 'pause', lang, pre_s: PAUSE_SAMPLE_S });
