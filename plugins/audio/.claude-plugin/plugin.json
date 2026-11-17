@@ -1,7 +1,7 @@
 {
   "name": "audio",
   "version": "0.2.0",
-  "description": "Finished multi-voice audio, free and on your machine: narration, dialogue, audiobooks (ACX), lessons, podcasts, drama, ads and meditations, with delivery presets, licensed sound, a transcription QA gate, mastering and captions.",
+  "description": "Finished multi-voice audio, free and on your machine: narration, dialogue, audiobooks (ACX), lessons, podcasts, drama, ads and meditations, with Supertonic 3 or optional Qwen3-TTS voices (Apple Silicon), delivery presets, licensed sound, a transcription QA gate, mastering and captions.",
   "author": {
     "name": "agentskilldeck"
   },

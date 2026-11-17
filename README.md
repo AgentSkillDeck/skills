@@ -43,7 +43,7 @@ A single UI skill also installs on its own with the `skills` CLI: `npx skills ad
 | Plugin | Skill | Use it to | Example prompt |
 |---|---|---|---|
 | audio | [`deck-script`](#deck-script) | Write scripts for the ear: narration, lessons, podcasts, drama, ads, meditations, kids' stories | "Turn this article into a 60-second narration for a calm female voice." |
-| audio | [`deck-voice`](#deck-voice) | Render the script on-device: cast, emotions, QA, mix, captions; your own voice | "Make an audiobook of chapter one with a different voice for Holmes." |
+| audio | [`deck-voice`](#deck-voice) | Render the script on-device with Supertonic 3 or Qwen3 voices (Apple Silicon): cast, emotions, QA, mix, captions; your own voice | "Make an audiobook of chapter one with a different voice for Holmes." |
 | audio | [`deck-mix`](#deck-mix) | Find licensed sound, place cues, remix and re-master | "Add rain behind the second scene and duck the music under the voices." |
 | ui | [`deck-design`](#deck-design) | Design, build, redesign or polish web, iOS and Android interfaces | "Redesign our billing settings page so the current plan and invoices are easy to scan." |
 | ui | [`deck-review`](#deck-review) | Critique, audit or gate a built interface before it ships | "Review the onboarding flow before we ship. Is it ready, and does it look generic?" |
