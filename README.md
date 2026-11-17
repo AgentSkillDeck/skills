@@ -15,7 +15,7 @@ Open plugins for coding agents, one domain per plugin. `audio` makes finished, m
   - [Setup](#setup)
   - Skills: [`deck-script`](#deck-script) · [`deck-voice`](#deck-voice) · [`deck-mix`](#deck-mix)
   - [Your own voice](#your-own-voice)
-  - [Listen: eight examples](#listen)
+  - [Listen: nine examples](#listen)
   - [How it compares](#how-it-compares)
   - [The Supertonic tag bug, and our fix](#the-supertonic-tag-bug-and-our-fix)
 - [UI plugin](#ui-plugin)
@@ -101,13 +101,14 @@ You can voice a character yourself. Cast it `voice: record` and read its lines, 
 
 ### Listen
 
-Eight pieces rendered by `produce.mjs` from the scripts in [plugins/audio/examples](plugins/audio/examples/), unedited, every one through the QA gate. Each folder has the script, the mix, captions, the timeline and the credits.
+Nine pieces rendered by `produce.mjs` from the scripts in [plugins/audio/examples](plugins/audio/examples/), unedited, every one through the QA gate. Each folder has the script, the mix, captions, the timeline and the credits.
 
 <!-- showcase-table -->
 
 | Piece | Domain | Voices | Length | Files |
 |---|---|---|---|---|
 | [The Lighthouse](plugins/audio/examples/lighthouse/) | Audio drama with storm and sea | Narrator M5, Maya F2, Eli M1 | 1:09 | [mp3](plugins/audio/examples/lighthouse/mix.mp3) · [script](plugins/audio/examples/lighthouse/script.audio.md) |
+| [The lens that saved the ships](plugins/audio/examples/documentary/) | Short documentary, Qwen3 voices (Apple Silicon) | Narrator qwen:ryan, Keeper qwen:aiden | 0:52 | [mp3](plugins/audio/examples/documentary/mix.mp3) · [preview](plugins/audio/examples/documentary/preview.mp4) |
 | [Pip and the Lantern Bug](plugins/audio/examples/bedtime/) | Bedtime story for kids | Narrator F3, Pip F2, Glow M1 | 1:10 | [mp3](plugins/audio/examples/bedtime/mix.mp3) · [script](plugins/audio/examples/bedtime/script.audio.md) |
 | [How vaccines train your immune system](plugins/audio/examples/lesson/) | Health lesson in five chapters | Narrator F4, Student M4 | 0:55 | [mp3](plugins/audio/examples/lesson/mix.mp3) · [script](plugins/audio/examples/lesson/script.audio.md) |
 | [Small Wonders, cold open](plugins/audio/examples/podcast/) | Podcast cold open into the theme | Nova F2, Rex M3 | 0:43 | [mp3](plugins/audio/examples/podcast/mix.mp3) · [script](plugins/audio/examples/podcast/script.audio.md) |

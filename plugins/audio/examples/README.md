@@ -1,6 +1,6 @@
 # Audio examples
 
-Eight pieces rendered by `produce.mjs` from the scripts in these folders, unedited: no hand mixing, no retouching, no cherry-picked takes beyond what the pipeline's own QA chose. Each folder has:
+Nine pieces rendered by `produce.mjs` from the scripts in these folders, unedited: no hand mixing, no retouching, no cherry-picked takes beyond what the pipeline's own QA chose. Each folder has:
 
 | File | What it is |
 |---|---|
@@ -16,6 +16,7 @@ Eight pieces rendered by `produce.mjs` from the scripts in these folders, unedit
 | Piece | Domain | Voices | Length | Listen |
 |---|---|---|---|---|
 | [The Lighthouse](./lighthouse/) | Audio drama with storm and sea | Narrator M5, Maya F2, Eli M1 | 1:09 | [mp3](./lighthouse/mix.mp3) · [preview](./lighthouse/preview.mp4) |
+| [The lens that saved the ships](./documentary/) | Short documentary, Qwen3 voices (Apple Silicon) | Narrator qwen:ryan, Keeper qwen:aiden | 0:52 | [mp3](./documentary/mix.mp3) · [preview](./documentary/preview.mp4) |
 | [Pip and the Lantern Bug](./bedtime/) | Bedtime story for kids | Narrator F3, Pip F2, Glow M1 | 1:10 | [mp3](./bedtime/mix.mp3) · [preview](./bedtime/preview.mp4) |
 | [How vaccines train your immune system](./lesson/) | Health lesson in five chapters | Narrator F4, Student M4 | 0:55 | [mp3](./lesson/mix.mp3) · [preview](./lesson/preview.mp4) |
 | [Small Wonders, cold open](./podcast/) | Podcast cold open into the theme | Nova F2, Rex M3 | 0:43 | [mp3](./podcast/mix.mp3) · [preview](./podcast/preview.mp4) |
@@ -27,7 +28,7 @@ Eight pieces rendered by `produce.mjs` from the scripts in these folders, unedit
 ## How they were made and checked
 
 - Every line was transcribed by faster-whisper and scored against the script before mixing; failed takes were re-rendered with new seeds. After mastering, each mix was transcribed again end to end and checked for spoken tags, timing and level. Whisper hears less than a listener, so which native tags each voice may use also rests on the owner's listening tests (recorded in the per-voice table).
-- Loudness: −16 LUFS integrated (true peak ≤ −1 dBTP) for drama, podcast, lesson, kids, languages and playbook; −20 LUFS for the meditation; the audiobook is mastered to ACX (RMS −23 to −18 dB, peak ≤ −3 dBFS, noise floor ≤ −60 dB, with room tone at head and tail).
+- Loudness: −14 LUFS (the video preset) for the documentary; −16 LUFS integrated (true peak ≤ −1 dBTP) for drama, podcast, lesson, kids, languages and playbook; −20 LUFS for the meditation; the audiobook is mastered to ACX (RMS −23 to −18 dB, peak ≤ −3 dBFS, noise floor ≤ −60 dB, with room tone at head and tail).
 - Nonverbals use the default `auto` mode: a laugh is the voice's own where the per-voice table allows it ([nonverbal](../library/nonverbal.md)); breaths, sighs and yawns that a voice would speak as words are spliced from the bundled CC0 pack.
 - Sounds come from Freesound and Wikimedia Commons, CC0 or CC BY only, each fetched with a license sidecar; CC BY sounds are attributed in `CREDITS.md`. The sound files themselves are not committed (only what is listed above), so the `./sounds/` paths in the scripts point to files on the machine that rendered them.
 - `mix.mp3` is `produce.mjs`'s own file when it fits in 1 MB; longer pieces were re-encoded from `mix.wav` at the highest constant bit rate that fits (noted in each `CREDITS.md`). The audiobook's ACX master is 192 kbps CBR before that re-encode.

@@ -1,0 +1,820 @@
+{
+  "version": 1,
+  "title": "The lens that saved the ships",
+  "duration_s": 52.35,
+  "scenes": [
+    {
+      "name": "1. The problem",
+      "start": 0.3
+    },
+    {
+      "name": "2. The idea",
+      "start": 16.22
+    },
+    {
+      "name": "3. The night it worked",
+      "start": 34.19
+    }
+  ],
+  "lines": [
+    {
+      "id": "L11-0",
+      "n": 11,
+      "kind": "speech",
+      "speaker": "NARRATOR",
+      "voice": "qwen:ryan",
+      "emotion": "calm",
+      "text": "In the early eighteen hundreds, a lighthouse was a fire in a box. Most of its light went up into the sky, or down into the rocks.",
+      "start": 0.5,
+      "end": 9.54,
+      "words": [
+        {
+          "w": "In",
+          "start": 0.5,
+          "end": 0.7
+        },
+        {
+          "w": "the",
+          "start": 0.7,
+          "end": 0.8
+        },
+        {
+          "w": "early",
+          "start": 0.8,
+          "end": 1.12
+        },
+        {
+          "w": "eighteen",
+          "start": 1.12,
+          "end": 1.12
+        },
+        {
+          "w": "hundreds,",
+          "start": 1.12,
+          "end": 2.32
+        },
+        {
+          "w": "a",
+          "start": 2.84,
+          "end": 2.86
+        },
+        {
+          "w": "lighthouse",
+          "start": 2.86,
+          "end": 3.2
+        },
+        {
+          "w": "was",
+          "start": 3.2,
+          "end": 3.54
+        },
+        {
+          "w": "a",
+          "start": 3.54,
+          "end": 3.72
+        },
+        {
+          "w": "fire",
+          "start": 3.72,
+          "end": 4
+        },
+        {
+          "w": "in",
+          "start": 4,
+          "end": 4.22
+        },
+        {
+          "w": "a",
+          "start": 4.22,
+          "end": 4.34
+        },
+        {
+          "w": "box.",
+          "start": 4.34,
+          "end": 4.74
+        },
+        {
+          "w": "Most",
+          "start": 5.66,
+          "end": 5.82
+        },
+        {
+          "w": "of",
+          "start": 5.82,
+          "end": 6
+        },
+        {
+          "w": "its",
+          "start": 6,
+          "end": 6.16
+        },
+        {
+          "w": "light",
+          "start": 6.16,
+          "end": 6.44
+        },
+        {
+          "w": "went",
+          "start": 6.44,
+          "end": 6.7
+        },
+        {
+          "w": "up",
+          "start": 6.7,
+          "end": 6.84
+        },
+        {
+          "w": "into",
+          "start": 6.84,
+          "end": 7.08
+        },
+        {
+          "w": "the",
+          "start": 7.08,
+          "end": 7.22
+        },
+        {
+          "w": "sky,",
+          "start": 7.22,
+          "end": 7.62
+        },
+        {
+          "w": "or",
+          "start": 7.62,
+          "end": 8.2
+        },
+        {
+          "w": "down",
+          "start": 8.2,
+          "end": 8.46
+        },
+        {
+          "w": "into",
+          "start": 8.46,
+          "end": 8.7
+        },
+        {
+          "w": "the",
+          "start": 8.7,
+          "end": 8.88
+        },
+        {
+          "w": "rocks.",
+          "start": 8.88,
+          "end": 9.2
+        }
+      ]
+    },
+    {
+      "id": "L12-0",
+      "n": 12,
+      "kind": "speech",
+      "speaker": "NARRATOR",
+      "voice": "qwen:ryan",
+      "emotion": "authoritative",
+      "text": "Ships could not see it until they were already close. Too close, on a stormy night.",
+      "start": 10.39,
+      "end": 16.07,
+      "words": [
+        {
+          "w": "Ships",
+          "start": 10.39,
+          "end": 10.77
+        },
+        {
+          "w": "could",
+          "start": 10.77,
+          "end": 11.11
+        },
+        {
+          "w": "not",
+          "start": 11.11,
+          "end": 11.31
+        },
+        {
+          "w": "see",
+          "start": 11.31,
+          "end": 11.63
+        },
+        {
+          "w": "it",
+          "start": 11.63,
+          "end": 11.75
+        },
+        {
+          "w": "until",
+          "start": 11.75,
+          "end": 12.05
+        },
+        {
+          "w": "they",
+          "start": 12.05,
+          "end": 12.23
+        },
+        {
+          "w": "were",
+          "start": 12.23,
+          "end": 12.39
+        },
+        {
+          "w": "already",
+          "start": 12.39,
+          "end": 12.89
+        },
+        {
+          "w": "close.",
+          "start": 12.89,
+          "end": 13.37
+        },
+        {
+          "w": "Too",
+          "start": 14.31,
+          "end": 14.43
+        },
+        {
+          "w": "close,",
+          "start": 14.43,
+          "end": 14.85
+        },
+        {
+          "w": "on",
+          "start": 14.85,
+          "end": 15.13
+        },
+        {
+          "w": "a",
+          "start": 15.13,
+          "end": 15.27
+        },
+        {
+          "w": "stormy",
+          "start": 15.27,
+          "end": 15.71
+        },
+        {
+          "w": "night.",
+          "start": 15.71,
+          "end": 15.97
+        }
+      ]
+    },
+    {
+      "id": "L15-0",
+      "n": 15,
+      "kind": "speech",
+      "speaker": "NARRATOR",
+      "voice": "qwen:ryan",
+      "emotion": null,
+      "text": "In eighteen twenty-two, a French engineer named Augustin Fresnel showed a different lens. Not one thick slab of glass, but rings of thin prisms, stepped like a staircase.",
+      "start": 16.77,
+      "end": 28.13,
+      "words": [
+        {
+          "w": "In",
+          "start": 16.77,
+          "end": 16.97
+        },
+        {
+          "w": "eighteen",
+          "start": 16.97,
+          "end": 16.97
+        },
+        {
+          "w": "twenty-two,",
+          "start": 16.97,
+          "end": 17.89
+        },
+        {
+          "w": "a",
+          "start": 18.55,
+          "end": 18.63
+        },
+        {
+          "w": "French",
+          "start": 18.63,
+          "end": 18.83
+        },
+        {
+          "w": "engineer",
+          "start": 18.83,
+          "end": 19.31
+        },
+        {
+          "w": "named",
+          "start": 19.31,
+          "end": 19.57
+        },
+        {
+          "w": "Augustin",
+          "start": 19.57,
+          "end": 20.11
+        },
+        {
+          "w": "Fresnel",
+          "start": 20.11,
+          "end": 20.53
+        },
+        {
+          "w": "showed",
+          "start": 20.53,
+          "end": 20.85
+        },
+        {
+          "w": "a",
+          "start": 20.85,
+          "end": 20.99
+        },
+        {
+          "w": "different",
+          "start": 20.99,
+          "end": 21.31
+        },
+        {
+          "w": "lens.",
+          "start": 21.31,
+          "end": 21.71
+        },
+        {
+          "w": "Not",
+          "start": 22.55,
+          "end": 22.71
+        },
+        {
+          "w": "one",
+          "start": 22.71,
+          "end": 23.09
+        },
+        {
+          "w": "thick",
+          "start": 23.09,
+          "end": 23.43
+        },
+        {
+          "w": "slab",
+          "start": 23.43,
+          "end": 23.77
+        },
+        {
+          "w": "of",
+          "start": 23.77,
+          "end": 24.01
+        },
+        {
+          "w": "glass,",
+          "start": 24.01,
+          "end": 24.37
+        },
+        {
+          "w": "but",
+          "start": 24.87,
+          "end": 25.07
+        },
+        {
+          "w": "rings",
+          "start": 25.07,
+          "end": 25.43
+        },
+        {
+          "w": "of",
+          "start": 25.43,
+          "end": 25.63
+        },
+        {
+          "w": "thin",
+          "start": 25.63,
+          "end": 25.91
+        },
+        {
+          "w": "prisms,",
+          "start": 25.91,
+          "end": 26.45
+        },
+        {
+          "w": "stepped",
+          "start": 26.45,
+          "end": 26.93
+        },
+        {
+          "w": "like",
+          "start": 26.93,
+          "end": 27.25
+        },
+        {
+          "w": "a",
+          "start": 27.25,
+          "end": 27.41
+        },
+        {
+          "w": "staircase.",
+          "start": 27.41,
+          "end": 27.71
+        }
+      ]
+    },
+    {
+      "id": "L16-0",
+      "n": 16,
+      "kind": "speech",
+      "speaker": "NARRATOR",
+      "voice": "qwen:ryan",
+      "emotion": "surprised",
+      "text": "Each ring bent the light the same way. Together they threw almost all of it toward the sea.",
+      "start": 28.73,
+      "end": 34.09,
+      "words": [
+        {
+          "w": "Each",
+          "start": 28.73,
+          "end": 29.03
+        },
+        {
+          "w": "ring",
+          "start": 29.03,
+          "end": 29.39
+        },
+        {
+          "w": "bent",
+          "start": 29.39,
+          "end": 29.69
+        },
+        {
+          "w": "the",
+          "start": 29.69,
+          "end": 29.85
+        },
+        {
+          "w": "light",
+          "start": 29.85,
+          "end": 30.09
+        },
+        {
+          "w": "the",
+          "start": 30.09,
+          "end": 30.25
+        },
+        {
+          "w": "same",
+          "start": 30.25,
+          "end": 30.51
+        },
+        {
+          "w": "way.",
+          "start": 30.51,
+          "end": 30.93
+        },
+        {
+          "w": "Together",
+          "start": 31.55,
+          "end": 31.61
+        },
+        {
+          "w": "they",
+          "start": 31.61,
+          "end": 31.95
+        },
+        {
+          "w": "threw",
+          "start": 31.95,
+          "end": 32.29
+        },
+        {
+          "w": "almost",
+          "start": 32.29,
+          "end": 32.73
+        },
+        {
+          "w": "all",
+          "start": 32.73,
+          "end": 33.13
+        },
+        {
+          "w": "of",
+          "start": 33.13,
+          "end": 33.23
+        },
+        {
+          "w": "it",
+          "start": 33.23,
+          "end": 33.35
+        },
+        {
+          "w": "toward",
+          "start": 33.35,
+          "end": 33.57
+        },
+        {
+          "w": "the",
+          "start": 33.57,
+          "end": 33.77
+        },
+        {
+          "w": "sea.",
+          "start": 33.77,
+          "end": 34.01
+        }
+      ]
+    },
+    {
+      "id": "L19-0",
+      "n": 19,
+      "kind": "speech",
+      "speaker": "KEEPER",
+      "voice": "qwen:aiden",
+      "emotion": "tender",
+      "text": "The first night we lit it, the beam reached the far headland. We just stood there and watched it turn.",
+      "start": 34.84,
+      "end": 40.28,
+      "words": [
+        {
+          "w": "The",
+          "start": 34.84,
+          "end": 35.02
+        },
+        {
+          "w": "first",
+          "start": 35.02,
+          "end": 35.2
+        },
+        {
+          "w": "night",
+          "start": 35.2,
+          "end": 35.42
+        },
+        {
+          "w": "we",
+          "start": 35.42,
+          "end": 35.6
+        },
+        {
+          "w": "lit",
+          "start": 35.6,
+          "end": 35.78
+        },
+        {
+          "w": "it,",
+          "start": 35.78,
+          "end": 35.98
+        },
+        {
+          "w": "the",
+          "start": 36.24,
+          "end": 36.32
+        },
+        {
+          "w": "beam",
+          "start": 36.32,
+          "end": 36.58
+        },
+        {
+          "w": "reached",
+          "start": 36.58,
+          "end": 36.9
+        },
+        {
+          "w": "the",
+          "start": 36.9,
+          "end": 37.14
+        },
+        {
+          "w": "far",
+          "start": 37.14,
+          "end": 37.36
+        },
+        {
+          "w": "headland.",
+          "start": 37.36,
+          "end": 37.84
+        },
+        {
+          "w": "We",
+          "start": 38.3,
+          "end": 38.42
+        },
+        {
+          "w": "just",
+          "start": 38.42,
+          "end": 38.56
+        },
+        {
+          "w": "stood",
+          "start": 38.56,
+          "end": 38.8
+        },
+        {
+          "w": "there",
+          "start": 38.8,
+          "end": 39.12
+        },
+        {
+          "w": "and",
+          "start": 39.12,
+          "end": 39.42
+        },
+        {
+          "w": "watched",
+          "start": 39.42,
+          "end": 39.64
+        },
+        {
+          "w": "it",
+          "start": 39.64,
+          "end": 39.88
+        },
+        {
+          "w": "turn.",
+          "start": 39.88,
+          "end": 40.12
+        }
+      ]
+    },
+    {
+      "id": "L20-0",
+      "n": 20,
+      "kind": "speech",
+      "speaker": "NARRATOR",
+      "voice": "qwen:ryan",
+      "emotion": "calm",
+      "text": "A year later, the lens was shining from the Cordouan lighthouse. Within a few decades, lights like it guarded coasts around the world.",
+      "start": 41.23,
+      "end": 51.55,
+      "words": [
+        {
+          "w": "A",
+          "start": 41.23,
+          "end": 41.49
+        },
+        {
+          "w": "year",
+          "start": 41.49,
+          "end": 41.67
+        },
+        {
+          "w": "later,",
+          "start": 41.67,
+          "end": 42.17
+        },
+        {
+          "w": "the",
+          "start": 42.83,
+          "end": 42.85
+        },
+        {
+          "w": "lens",
+          "start": 42.85,
+          "end": 43.15
+        },
+        {
+          "w": "was",
+          "start": 43.15,
+          "end": 43.35
+        },
+        {
+          "w": "shining",
+          "start": 43.35,
+          "end": 43.73
+        },
+        {
+          "w": "from",
+          "start": 43.73,
+          "end": 44.09
+        },
+        {
+          "w": "the",
+          "start": 44.09,
+          "end": 44.37
+        },
+        {
+          "w": "Cordouan",
+          "start": 44.61,
+          "end": 44.75
+        },
+        {
+          "w": "lighthouse.",
+          "start": 44.75,
+          "end": 45.23
+        },
+        {
+          "w": "Within",
+          "start": 46.39,
+          "end": 46.65
+        },
+        {
+          "w": "a",
+          "start": 46.65,
+          "end": 46.83
+        },
+        {
+          "w": "few",
+          "start": 46.83,
+          "end": 47.07
+        },
+        {
+          "w": "decades,",
+          "start": 47.07,
+          "end": 47.69
+        },
+        {
+          "w": "lights",
+          "start": 48.69,
+          "end": 48.79
+        },
+        {
+          "w": "like",
+          "start": 48.79,
+          "end": 49.15
+        },
+        {
+          "w": "it",
+          "start": 49.15,
+          "end": 49.37
+        },
+        {
+          "w": "guarded",
+          "start": 49.37,
+          "end": 49.77
+        },
+        {
+          "w": "coasts",
+          "start": 49.77,
+          "end": 50.33
+        },
+        {
+          "w": "around",
+          "start": 50.33,
+          "end": 50.75
+        },
+        {
+          "w": "the",
+          "start": 50.75,
+          "end": 51.05
+        },
+        {
+          "w": "world.",
+          "start": 51.05,
+          "end": 51.35
+        }
+      ]
+    }
+  ],
+  "cues": [
+    {
+      "type": "ambience",
+      "id": "L10-0",
+      "label": "wind",
+      "start": 0.3,
+      "gain_db": -26,
+      "loop": true,
+      "fade_in": 1,
+      "fade_out": 1,
+      "end": 16.22,
+      "path": "assets/generated-wind-55s.wav"
+    },
+    {
+      "type": "ambience",
+      "id": "L14-0",
+      "label": "wind",
+      "start": 16.22,
+      "gain_db": -26,
+      "loop": true,
+      "fade_in": 1,
+      "fade_out": 1,
+      "end": 34.19,
+      "path": "assets/generated-wind-55s.wav"
+    },
+    {
+      "type": "ambience",
+      "id": "L18-0",
+      "label": "wind",
+      "start": 34.19,
+      "gain_db": -26,
+      "loop": true,
+      "fade_in": 1,
+      "fade_out": 1,
+      "end": 52.35,
+      "path": "assets/generated-wind-55s.wav"
+    }
+  ],
+  "assets": [
+    {
+      "ids": [
+        "L10-0",
+        "L14-0",
+        "L18-0"
+      ],
+      "type": "ambience",
+      "path": "assets/generated-wind-55s.wav",
+      "source": "generated",
+      "title": "Generated wind",
+      "creator": "agentskilldeck (ffmpeg generator)",
+      "license": "generated",
+      "license_url": "",
+      "source_url": "",
+      "attribution": "Generated wind: generated with ffmpeg, no attribution required"
+    }
+  ],
+  "warnings": [
+    "L10-0 ambience \"wind\": offline: skipped the sound search for \"wind\"; used a generated wind bed instead",
+    "L14-0 ambience \"wind\": offline: skipped the sound search for \"wind\"; used a generated wind bed instead",
+    "L18-0 ambience \"wind\": offline: skipped the sound search for \"wind\"; used a generated wind bed instead"
+  ]
+}
